@@ -84,7 +84,7 @@ class Game:
         if os.path.exists(hit_path):
             try:
                 self.hit_sound = pygame.mixer.Sound(hit_path)
-                self.hit_sound.set_volume(0.65)
+                self.hit_sound.set_volume(1.0)
             except Exception as e:
                 print(f"Could not load hit sound: {e}")
 
@@ -93,6 +93,23 @@ class Game:
         if not self.music_muted and self.hit_sound and self.hit_sound_cooldown <= 0:
             self.hit_sound.play()
             self.hit_sound_cooldown = 0.45
+
+    def trigger_game_over(self):
+        if self.state != GameState.GAME_OVER:
+            self.state = GameState.GAME_OVER
+            if self.engine_channel:
+                self.engine_channel.stop()
+            # Immediate roaring fuel detonation on vehicle crash or volcano detonation
+            if self.hit_sound and not self.music_muted:
+                self.hit_sound.play()
+            loss_music = os.path.join("assets", "the-sound-of-a-volcanic-eruption-explosions.mp3")
+            if os.path.exists(loss_music) and not self.music_muted:
+                try:
+                    pygame.mixer.music.load(loss_music)
+                    pygame.mixer.music.set_volume(1.0)
+                    pygame.mixer.music.play()
+                except Exception as e:
+                    print(f"Error playing game over music: {e}")
 
     def restart_game(self):
         """Reset gameplay systems and start a new run."""
@@ -106,6 +123,16 @@ class Game:
         self.is_siphoning = False
         self.is_landed = False
         self.state = GameState.PLAYING
+
+        # Resume main background arcade music
+        music_path = os.path.join("assets", "mondamusic-retro-arcade-game-music-512837.mp3")
+        if os.path.exists(music_path) and not self.music_muted:
+            try:
+                pygame.mixer.music.load(music_path)
+                pygame.mixer.music.set_volume(0.35)
+                pygame.mixer.music.play(-1)
+            except Exception as e:
+                print(f"Could not load music: {e}")
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -233,7 +260,7 @@ class Game:
             # 4. Update Volcano & Check Eruption
             self.volcano.update(dt)
             if self.volcano.has_erupted or self.player.hull <= 0:
-                self.state = GameState.GAME_OVER
+                self.trigger_game_over()
 
             # 5. Screen shake at Critical Mass
             if self.volcano.is_critical:
