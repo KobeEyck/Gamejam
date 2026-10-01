@@ -22,6 +22,7 @@ from src.world.map import WorldMap
 from src.systems.economy import EconomySystem
 from src.ui.hud import HUD
 from src.ui.shop_menu import ShopMenu
+from src.ui.main_menu import MainMenu
 
 class Game:
     def __init__(self):
@@ -30,7 +31,7 @@ class Game:
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.clock = pygame.time.Clock()
         self.running = True
-        self.state = GameState.PLAYING
+        self.state = GameState.MENU
 
         # Systems Initialization
         self.camera = Camera()
@@ -42,6 +43,7 @@ class Game:
         self.economy = EconomySystem(starting_cash=100)
         self.hud = HUD()
         self.shop_menu = ShopMenu()
+        self.main_menu = MainMenu()
 
         # Ephemeral states
         self.is_siphoning = False
@@ -51,6 +53,13 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+                
+            if self.state == GameState.MENU:
+                action = self.main_menu.handle_event(event)
+                if action == "PLAY":
+                    self.state = GameState.PLAYING
+                elif action == "QUIT":
+                    self.running = False
                 
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE and self.state == GameState.PLAYING:
@@ -161,6 +170,11 @@ class Game:
             self.hud.update(dt)
 
     def draw(self):
+        if self.state == GameState.MENU:
+            self.main_menu.draw(self.screen)
+            pygame.display.flip()
+            return
+
         # 1. Dynamic Sky Color according to Threat Level
         threat = self.volcano.threat_level
         if threat == 1:
