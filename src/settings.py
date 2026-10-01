@@ -64,5 +64,5 @@ THREAT_LEVEL_2_MAX = 0.60
 THREAT_LEVEL_3_MAX = 0.85
 # Above 0.85 = Critical Mass
 
-# Base volcano heating rate (% per second)
-BASE_HEAT_RATE = 0.015
+# Base volcano heating rate (% per second) - tuned for ~4-5 minute ferry runs
+BASE_HEAT_RATE = 0.0035

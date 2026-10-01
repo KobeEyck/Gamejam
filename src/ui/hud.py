@@ -92,10 +92,13 @@ class HUD:
         cash_surf = self.large_font.render(f"${economy.cash}", True, (100, 255, 140))
         surface.blit(cash_surf, (SCREEN_WIDTH - cash_surf.get_width() - 30, 22))
 
-        # 4. Context Prompts (Siphoning, Landing)
+        # 4. Context Prompts (Siphoning, Landing, Payload Drop)
         if siphoning:
             siphon_label = self.font.render("PUMP ACTIVE - SIPHONING WATER", True, (120, 240, 255))
             surface.blit(siphon_label, (SCREEN_WIDTH // 2 - siphon_label.get_width() // 2, 70))
+        elif player.water_tank.current_water > 0:
+            drop_label = self.font.render("💧 PAYLOAD READY - PRESS [SPACE] TO DROP WATER", True, (100, 220, 255))
+            surface.blit(drop_label, (SCREEN_WIDTH // 2 - drop_label.get_width() // 2, 70))
         elif landed:
             land_label = self.font.render("LANDED ON HELIPAD - PRESS [E] TO OPEN SHOP / REPAIR", True, (255, 230, 80))
             surface.blit(land_label, (SCREEN_WIDTH // 2 - land_label.get_width() // 2, 70))

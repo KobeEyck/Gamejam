@@ -48,7 +48,7 @@ class VolcanoSystem:
         Direct hits in crater center yield full cooling; glancing hits yield 30%.
         Returns the percentage cooled.
         """
-        cooling_factor = 0.0025 if direct_hit else 0.0008
+        cooling_factor = 0.0050 if direct_hit else 0.0020
         cooling = water_amount * cooling_factor
         previous = self.instability
         self.instability = max(0.0, self.instability - cooling)

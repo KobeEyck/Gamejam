@@ -7,8 +7,8 @@ A 2D Physics-Survival / Action-Logistics game built with Pygame for the Gamejam.
 ## 🎮 Flight Controls
 
 - **Pitch Rotation**: `A` / `D` or `Left` / `Right` (FPV drone acro mode — no auto-leveling!)
-- **Thruster / Throttle**: `W`, `Up Arrow`, or `Spacebar` (Accelerates in the direction the nose is pointed)
-- **Drop Water Payload**: `S`, `Down Arrow`, or `Enter`
+- **Thruster / Throttle**: `W` or `Up Arrow` (Accelerates in the direction the nose is pointed)
+- **Drop Water Payload**: `Spacebar` (or `S` / `Down Arrow` / `Enter`)
 - **Shop / Upgrades**: Land gently on the Helipad and press `E`
 - **Exit**: `Esc`
 

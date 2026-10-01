@@ -63,8 +63,8 @@ class Game:
                     elif self.state == GameState.SHOP:
                         self.state = GameState.PLAYING
 
-                # Water Drop Release (S, Down Arrow, or Return)
-                elif event.key in (pygame.K_s, pygame.K_DOWN, pygame.K_RETURN) and self.state == GameState.PLAYING:
+                # Water Drop Release (Spacebar, S, Down Arrow, or Return)
+                elif event.key in (pygame.K_SPACE, pygame.K_s, pygame.K_DOWN, pygame.K_RETURN) and self.state == GameState.PLAYING:
                     if self.player.water_tank.current_water > 0:
                         dropped_vol = self.player.water_tank.dump()
                         # Spawn water payload with forward momentum

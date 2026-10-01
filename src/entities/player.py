@@ -44,9 +44,9 @@ class Player(pygame.sprite.Sprite):
     def total_mass(self) -> float:
         """
         Base mass + water mass.
-        Full water payload doubles the vehicle's effective mass.
+        Full water payload increases mass by 35% (noticeable momentum without feeling like lead).
         """
-        water_mass_factor = 1.0 + self.water_tank.fill_ratio
+        water_mass_factor = 1.0 + (self.water_tank.fill_ratio * 0.35)
         return self.stats.base_mass * water_mass_factor
 
     @property
@@ -59,7 +59,7 @@ class Player(pygame.sprite.Sprite):
         keys = pygame.key.get_pressed()
         
         # Throttle (Thrust along vehicle forward vector)
-        self.is_thrusting = keys[pygame.K_w] or keys[pygame.K_UP] or keys[pygame.K_SPACE]
+        self.is_thrusting = keys[pygame.K_w] or keys[pygame.K_UP]
         
         # Pitch rotation (Left / Right tilt)
         self.pitch_input = 0.0
