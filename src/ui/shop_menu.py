@@ -4,14 +4,26 @@ Allows player to spend earned cash to buy upgrades or unlock new aircraft archet
 """
 import pygame
 from src.settings import SCREEN_WIDTH, SCREEN_HEIGHT
-from src.entities.vehicle import WATER_BOMBER, HEAVY_DROPSHIP
+from src.entities.vehicle import BUCKET_HELI, WATER_BOMBER, HEAVY_DROPSHIP
 
 class ShopMenu:
     def __init__(self):
+        if not pygame.get_init():
+            pygame.init()
+        pygame.font.init()
+
         self.title_font = pygame.font.Font(None, 48)
         self.item_font = pygame.font.Font(None, 28)
         self.hint_font = pygame.font.Font(None, 24)
         self.message = ""
+
+    def _apply_vehicle(self, player, vehicle):
+        player.stats = vehicle
+        player.max_hull = vehicle.max_hull
+        player.hull = vehicle.max_hull
+        player.water_tank.capacity = vehicle.water_capacity
+        player.water_tank.current_water = min(player.water_tank.current_water, vehicle.water_capacity)
+        player.water_tank.base_siphon_speed = vehicle.siphon_speed
 
     def handle_event(self, event, player, economy) -> bool:
         """
@@ -21,7 +33,7 @@ class ShopMenu:
         if event.type == pygame.KEYDOWN:
             if event.key in (pygame.K_ESCAPE, pygame.K_e):
                 return False  # Close shop
-                
+
             # 1: Repair Hull ($50)
             elif event.key == pygame.K_1:
                 cost = 50
@@ -61,26 +73,32 @@ class ShopMenu:
                 else:
                     self.message = "Not enough cash!"
 
-            # 5: Buy Water Bomber ($1200)
+            # 5: Buy starter Bucket Heli ($0)
             elif event.key == pygame.K_5:
-                if economy.spend(WATER_BOMBER.cost):
-                    player.stats = WATER_BOMBER
-                    player.max_hull = WATER_BOMBER.max_hull
-                    player.hull = WATER_BOMBER.max_hull
-                    player.water_tank.capacity = WATER_BOMBER.water_capacity
-                    player.water_tank.base_siphon_speed = WATER_BOMBER.siphon_speed
+                if player.stats.name == BUCKET_HELI.name:
+                    self.message = "You are already flying the Bucket Heli."
+                elif economy.spend(BUCKET_HELI.cost):
+                    self._apply_vehicle(player, BUCKET_HELI)
+                    self.message = "Equipped Bucket Heli!"
+                else:
+                    self.message = "Not enough cash for Bucket Heli!"
+
+            # 6: Buy Water Bomber ($1200)
+            elif event.key == pygame.K_6:
+                if player.stats.name == WATER_BOMBER.name:
+                    self.message = "You are already flying the Water Bomber."
+                elif economy.spend(WATER_BOMBER.cost):
+                    self._apply_vehicle(player, WATER_BOMBER)
                     self.message = "Equipped Water Bomber!"
                 else:
                     self.message = "Not enough cash for Water Bomber!"
 
-            # 6: Buy Heavy Dropship ($3500)
-            elif event.key == pygame.K_6:
-                if economy.spend(HEAVY_DROPSHIP.cost):
-                    player.stats = HEAVY_DROPSHIP
-                    player.max_hull = HEAVY_DROPSHIP.max_hull
-                    player.hull = HEAVY_DROPSHIP.max_hull
-                    player.water_tank.capacity = HEAVY_DROPSHIP.water_capacity
-                    player.water_tank.base_siphon_speed = HEAVY_DROPSHIP.siphon_speed
+            # 7: Buy Heavy Dropship ($3500)
+            elif event.key == pygame.K_7:
+                if player.stats.name == HEAVY_DROPSHIP.name:
+                    self.message = "You are already flying the Heavy Dropship."
+                elif economy.spend(HEAVY_DROPSHIP.cost):
+                    self._apply_vehicle(player, HEAVY_DROPSHIP)
                     self.message = "Equipped Heavy Dropship!"
                 else:
                     self.message = "Not enough cash for Heavy Dropship!"
@@ -111,14 +129,15 @@ class ShopMenu:
             f"[2] Intake Pumps Lvl {player.water_tank.pump_upgrade_level + 1} (${pump_cost}) - Faster lake siphoning",
             f"[3] Heat Shielding Lvl {player.shield_level + 1} (${shield_cost}) - Reduces lava bomb damage",
             f"[4] Overclock Thrusters Lvl {player.thruster_level + 1} (${thrust_cost}) - Fights updrafts & climbs faster",
-            f"[5] Aircraft: Water Bomber (${WATER_BOMBER.cost}) - Fixed-wing high payload",
-            f"[6] Aircraft: Heavy Dropship (${HEAVY_DROPSHIP.cost}) - Dual-rotor massive tank",
+            f"[5] Aircraft: Bucket Heli (${BUCKET_HELI.cost}) - Slow, low capacity, highly maneuverable. Good for learning the physics.",
+            f"[6] Aircraft: Water Bomber (${WATER_BOMBER.cost}) - Fixed-wing. Cannot hover. Must skim the lake at high speeds to scoop water and perform intense dive-bomb maneuvers over the crater.",
+            f"[7] Aircraft: Heavy Dropship (${HEAVY_DROPSHIP.cost}) - Dual-rotor sci-fi craft. Massive water capacity and heavy armor, but moves like a brick.",
         ]
 
         start_y = 180
         for i, item_text in enumerate(items):
             surf = self.item_font.render(item_text, True, (230, 230, 240))
-            surface.blit(surf, (280, start_y + (i * 45)))
+            surface.blit(surf, (180, start_y + (i * 38)))
 
         # Feedback message
         if self.message:

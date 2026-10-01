@@ -20,7 +20,7 @@ class VehicleStats:
 # Vehicle presets
 BUCKET_HELI = VehicleStats(
     name="Bucket Heli",
-    description="Agile and lightweight starter helicopter. Low capacity, high maneuverability.",
+    description="Slow, low capacity, but highly maneuverable. Good for learning the physics.",
     base_mass=1.0,
     max_thrust=720.0,
     max_pitch_rate=360.0,
@@ -32,7 +32,7 @@ BUCKET_HELI = VehicleStats(
 
 WATER_BOMBER = VehicleStats(
     name="Water Bomber",
-    description="Fixed-wing high-speed aircraft. High payload, requires momentum.",
+    description="Fixed-wing aircraft. Cannot hover. Must skim the lake at high speeds to scoop water and perform intense dive-bomb maneuvers over the crater. Carries massive payloads but requires a long turning radius.",
     base_mass=2.0,
     max_thrust=1100.0,
     max_pitch_rate=180.0,
@@ -44,7 +44,7 @@ WATER_BOMBER = VehicleStats(
 
 HEAVY_DROPSHIP = VehicleStats(
     name="Heavy Dropship",
-    description="Dual-rotor armored beast. Massive water capacity, moves like a brick.",
+    description="Dual-rotor sci-fi craft. Massive water capacity and heavy armor to tank lava rocks but moves like a brick.",
     base_mass=3.8,
     max_thrust=1850.0,
     max_pitch_rate=130.0,
