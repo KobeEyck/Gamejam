@@ -28,10 +28,11 @@ CALDERA_X_CENTER = 4200
 CALDERA_CRATER_WIDTH = 500
 CALDERA_Y = 650
 
-# --- Physics Constants ---
-GRAVITY = 350.0            # Pixels / sec^2 downwards
-AIR_RESISTANCE = 0.985     # Velocity damping per frame
-ANGULAR_DRAG = 0.92        # Pitch rotation damping
+# --- Physics Constants (Tuned for Helicopter Flight Model) ---
+GRAVITY = 280.0            # Pixels / sec^2 downwards
+AIR_RESISTANCE = 0.955     # Allows smooth forward cruising across the map
+ANGULAR_DRAG = 0.80        # Rapid pitch stabilization when keys released
+MAX_SPEED = 480.0          # Higher terminal speed cap for fast ferry runs
 
 # --- Colors (Curated Palette) ---
 COLOR_SKY_NORMAL = (24, 28, 44)
