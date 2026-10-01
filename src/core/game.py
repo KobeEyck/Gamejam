@@ -49,6 +49,19 @@ class Game:
         self.is_siphoning = False
         self.is_landed = False
 
+    def restart_game(self):
+        """Reset gameplay systems and start a new run."""
+        self.camera = Camera()
+        self.player = Player()
+        self.volcano = VolcanoSystem()
+        self.hazard_mgr = HazardManager()
+        self.particle_mgr = ParticleManager()
+        self.world_map = WorldMap()
+        self.economy = EconomySystem(starting_cash=100)
+        self.is_siphoning = False
+        self.is_landed = False
+        self.state = GameState.PLAYING
+
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -62,8 +75,11 @@ class Game:
                     self.running = False
                 
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE and self.state == GameState.PLAYING:
+                if event.key == pygame.K_ESCAPE and self.state in (GameState.PLAYING, GameState.GAME_OVER):
                     self.running = False
+
+                elif event.key == pygame.K_s and self.state == GameState.GAME_OVER:
+                    self.restart_game()
 
                 # Shop toggle when landed on helipad
                 elif event.key == pygame.K_h:
@@ -220,7 +236,7 @@ class Game:
             title = font.render(msg, True, color)
             self.screen.blit(title, ((SCREEN_WIDTH - title.get_width()) // 2, 280))
             
-            sub = sub_font.render("Press ESC to exit.", True, (120, 120, 120))
+            sub = sub_font.render("Press S to start again or ESC to exit.", True, (120, 120, 120))
             self.screen.blit(sub, ((SCREEN_WIDTH - sub.get_width()) // 2, 360))
 
         pygame.display.flip()
