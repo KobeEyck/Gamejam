@@ -29,7 +29,7 @@ class Game:
     def __init__(self):
         pygame.init()
         pygame.display.set_caption(TITLE)
-        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN | pygame.SCALED)
         self.clock = pygame.time.Clock()
         self.running = True
         self.state = GameState.MENU
@@ -142,6 +142,10 @@ class Game:
                         self.state = GameState.SHOP
                     elif self.state == GameState.SHOP:
                         self.state = GameState.PLAYING
+
+                # Fullscreen toggle
+                elif event.key == pygame.K_F11:
+                    pygame.display.toggle_fullscreen()
 
                 # Mute/unmute music & engine audio toggle
                 elif event.key == pygame.K_m:
