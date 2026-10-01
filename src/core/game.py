@@ -22,6 +22,7 @@ from src.world.map import WorldMap
 from src.systems.economy import EconomySystem
 from src.ui.hud import HUD
 from src.ui.shop_menu import ShopMenu
+from src.ui.main_menu import MainMenu
 
 class Game:
     def __init__(self):
@@ -30,7 +31,7 @@ class Game:
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.clock = pygame.time.Clock()
         self.running = True
-        self.state = GameState.PLAYING
+        self.state = GameState.MENU
 
         # Systems Initialization
         self.camera = Camera()
@@ -42,6 +43,7 @@ class Game:
         self.economy = EconomySystem(starting_cash=100)
         self.hud = HUD()
         self.shop_menu = ShopMenu()
+        self.main_menu = MainMenu()
 
         # Ephemeral states
         self.is_siphoning = False
@@ -51,6 +53,13 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+                
+            if self.state == GameState.MENU:
+                action = self.main_menu.handle_event(event)
+                if action == "PLAY":
+                    self.state = GameState.PLAYING
+                elif action == "QUIT":
+                    self.running = False
                 
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE and self.state == GameState.PLAYING:
@@ -84,6 +93,37 @@ class Game:
             # 1. Update Player Input & Movement
             self.player.handle_input()
             self.player.update(dt)
+
+            # Terrain Collision & Helipad Friction
+            ground_y = self.world_map.get_terrain_y(self.player.pos.x)
+            if self.player.pos.y >= ground_y - 10:
+                self.player.pos.y = ground_y - 10
+                
+                # Check if above helipad
+                helipad_rect = self.world_map.helipad_zone.rect
+                on_helipad = (helipad_rect.left <= self.player.pos.x <= helipad_rect.right)
+                
+                if on_helipad:
+                    # Shop pad: No damage, slow down so you don't slide off
+                    self.player.vel.x *= 0.85
+                    self.player.vel.y *= 0.85
+                    if self.player.vel.length() < 30:
+                        self.player.angular_velocity *= 0.5
+                else:
+                    # Normal terrain: Crash damage if speed is high
+                    speed = self.player.vel.length()
+                    if speed > 60:
+                        # Take damage based on impact speed
+                        damage = speed * 0.10
+                        self.player.apply_damage(damage)
+                        # Bounce / slow down
+                        self.player.vel.y = -abs(self.player.vel.y) * 0.4
+                        self.player.vel.x *= 0.5
+                        # Camera shake on heavy impact
+                        self.camera.add_shake(min(speed * 0.05, 8.0), 0.2)
+                    else:
+                        # Scrape against the ground gently
+                        self.player.vel *= 0.9
 
             # 2. Check Lake Siphon Zone
             self.is_siphoning, stability = self.world_map.lake_zone.is_player_siphoning(self.player)
@@ -130,6 +170,11 @@ class Game:
             self.hud.update(dt)
 
     def draw(self):
+        if self.state == GameState.MENU:
+            self.main_menu.draw(self.screen)
+            pygame.display.flip()
+            return
+
         # 1. Dynamic Sky Color according to Threat Level
         threat = self.volcano.threat_level
         if threat == 1:
