@@ -97,7 +97,7 @@ class HUD:
             siphon_label = self.font.render("PUMP ACTIVE - SIPHONING WATER", True, (120, 240, 255))
             surface.blit(siphon_label, (SCREEN_WIDTH // 2 - siphon_label.get_width() // 2, 70))
         elif landed:
-            land_label = self.font.render("AIRPORT RUNWAY - PRESS [E] OR [H] TO OPEN SHOP / REPAIR", True, (255, 230, 80))
+            land_label = self.font.render("AIRPORT RUNWAY - PRESS [H] TO OPEN SHOP / REPAIR", True, (255, 230, 80))
             surface.blit(land_label, (SCREEN_WIDTH // 2 - land_label.get_width() // 2, 70))
         elif player.water_tank.current_water > 0:
             drop_label = self.font.render("💧 PAYLOAD READY - PRESS [SPACE] TO DROP WATER", True, (100, 220, 255))
