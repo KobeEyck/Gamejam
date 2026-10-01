@@ -161,8 +161,98 @@ class Player(pygame.sprite.Sprite):
         self.pos.y = max(20, min(self.pos.y, WORLD_HEIGHT - 30))
 
     def draw(self, surface: pygame.Surface, camera):
-        """Renders the player aircraft rotated according to pitch."""
+        """Renders the player as a helicopter with a hanging bucket."""
         screen_pos = camera.apply(self.pos)
+        
+        rad = math.radians(self.angle)
+        cos_a = math.cos(rad)
+        sin_a = math.sin(rad)
+        
+        def transform(lx, ly):
+            # lx is Roof (+)/Belly (-), ly is Nose (+)/Tail (-)
+            rx = lx * cos_a - ly * sin_a + screen_pos[0]
+            ry = lx * sin_a + ly * cos_a + screen_pos[1]
+            return (rx, ry)
+
+        # 1. Draw Helicopter Body
+        heli_body = [
+            transform(-5, 18),   # Lower nose
+            transform(5, 18),    # Upper nose
+            transform(10, 8),    # Cockpit top
+            transform(10, -8),   # Engine top
+            transform(2, -12),   # Upper tail base
+            transform(2, -35),   # Tail end top
+            transform(-2, -35),  # Tail end bottom
+            transform(-2, -12),  # Lower tail base
+            transform(-8, -5),   # Belly rear
+            transform(-8, 8),    # Belly front
+        ]
+        
+        body_color = (220, 60, 50) if self.water_tank.fill_ratio < 0.5 else (180, 40, 30)
+        pygame.draw.polygon(surface, body_color, heli_body)
+        pygame.draw.polygon(surface, (40, 40, 40), heli_body, 2)
+        
+        # Cockpit window
+        window = [
+            transform(5, 17),
+            transform(9, 8),
+            transform(3, 8),
+            transform(-1, 17),
+        ]
+        pygame.draw.polygon(surface, (150, 220, 255), window)
+        
+        # Skids (Landing gear)
+        pygame.draw.line(surface, (100, 100, 100), transform(-8, 6), transform(-14, 6), 2)
+        pygame.draw.line(surface, (100, 100, 100), transform(-8, -6), transform(-14, -6), 2)
+        pygame.draw.line(surface, (150, 150, 150), transform(-14, 12), transform(-14, -12), 3)
+
+        # Main Rotor
+        pygame.draw.line(surface, (80, 80, 80), transform(10, -2), transform(16, -2), 3) # Mast
+        import time
+        blade_span = 24 if not self.is_thrusting else 24 * abs(math.cos(time.time() * 30))
+        pygame.draw.line(surface, (200, 200, 200), transform(16, -blade_span), transform(16, blade_span), 2)
+        
+        # Tail Rotor
+        tail_span = 8 * abs(math.cos(time.time() * 30)) if self.is_thrusting else 8
+        pygame.draw.line(surface, (180, 180, 180), transform(0, -35), transform(tail_span, -35), 2)
+        pygame.draw.line(surface, (180, 180, 180), transform(0, -35), transform(-tail_span, -35), 2)
+
+        # 2. Draw Hanging Water Bucket
+        # Attachment point at belly center
+        attach_x, attach_y = transform(-8, 0)
+        bucket_y_top = attach_y + 35
+        
+        # Draw cable
+        pygame.draw.line(surface, (80, 80, 80), (attach_x, attach_y), (attach_x, bucket_y_top), 2)
+        
+        # Bucket dimensions
+        bw_top = 12
+        bw_bot = 8
+        bh = 18
+        
+        bucket_pts = [
+            (attach_x - bw_top, bucket_y_top),
+            (attach_x + bw_top, bucket_y_top),
+            (attach_x + bw_bot, bucket_y_top + bh),
+            (attach_x - bw_bot, bucket_y_top + bh)
+        ]
+        
+        # Draw Water inside bucket
+        fill = self.water_tank.fill_ratio
+        if fill > 0:
+            w_h = bh * fill
+            w_y = bucket_y_top + bh - w_h
+            w_top_half = bw_bot + (bw_top - bw_bot) * fill
+            water_pts = [
+                (attach_x - w_top_half, w_y),
+                (attach_x + w_top_half, w_y),
+                (attach_x + bw_bot, bucket_y_top + bh),
+                (attach_x - bw_bot, bucket_y_top + bh)
+            ]
+            pygame.draw.polygon(surface, (60, 170, 255), water_pts)
+            
+        # Draw Bucket Outline
+        pygame.draw.polygon(surface, (200, 100, 30), bucket_pts, 2)
 
         if self.sprite:
             # Sprite naturally faces right with rotor on top
