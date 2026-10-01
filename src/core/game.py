@@ -208,6 +208,7 @@ class Game:
             # 1. Update Player Input & Movement
             self.player.handle_input()
             self.player.update(dt)
+            self.particle_mgr.spawn_exhaust(self.player, dt)
 
             # Terrain Collision & Helipad Friction
             ground_y = self.world_map.get_terrain_y(self.player.pos.x)
