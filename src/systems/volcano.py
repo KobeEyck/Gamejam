@@ -45,10 +45,11 @@ class VolcanoSystem:
     def apply_cooling(self, water_amount: float, direct_hit: bool = True) -> float:
         """
         Reduces instability based on water dropped.
-        Direct hits in crater center yield full cooling; glancing hits yield 30%.
+        10 Liters of water = 1% cooling (0.010 instability) on direct center hits.
+        Glancing hits yield 30% effectiveness (approx 33L per 1%).
         Returns the percentage cooled.
         """
-        cooling_factor = 0.0050 if direct_hit else 0.0020
+        cooling_factor = 0.0005 if direct_hit else 0.0003
         cooling = water_amount * cooling_factor
         previous = self.instability
         self.instability = max(0.0, self.instability - cooling)
