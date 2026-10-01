@@ -57,7 +57,7 @@ class Game:
                     self.running = False
 
                 # Shop toggle when landed on helipad
-                elif event.key == pygame.K_e:
+                elif event.key == pygame.K_h:
                     if self.is_landed and self.state == GameState.PLAYING:
                         self.state = GameState.SHOP
                     elif self.state == GameState.SHOP:
