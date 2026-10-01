@@ -21,14 +21,15 @@ from src.settings import (
 
 class HUD:
     def __init__(self):
-        self.font = pygame.font.Font(None, 24)
-        self.large_font = pygame.font.Font(None, 34)
-        self.alert_font = pygame.font.Font(None, 40)
+        self.font = pygame.font.SysFont(["arial", "segoeui", "consolas"], 15, bold=True)
+        self.large_font = pygame.font.SysFont(["arial", "segoeui", "consolas"], 28, bold=True)
+        self.alert_font = pygame.font.SysFont(["arial", "segoeui", "consolas"], 32, bold=True)
         self.pulse_timer = 0.0
         
         # Pre-allocated UI panel background
-        self.panel_bg = pygame.Surface((260, 80), pygame.SRCALPHA)
+        self.panel_bg = pygame.Surface((270, 62), pygame.SRCALPHA)
         self.panel_bg.fill(COLOR_HUD_BG)
+        pygame.draw.rect(self.panel_bg, (60, 65, 80, 180), (0, 0, 270, 62), 1, border_radius=5)
 
     def update(self, dt: float):
         self.pulse_timer += dt * 4.0
@@ -67,26 +68,28 @@ class HUD:
 
         # 2. Bottom-Left: Water Payload Tank & Hull
         panel_x = 24
-        panel_y = 620
+        panel_y = 638
         surface.blit(self.panel_bg, (panel_x, panel_y))
+
+        bar_w = 95
+        bar_h = 10
+        bar_x = panel_x + 160
 
         # Hull bar
         hull_ratio = player.hull / player.max_hull if player.max_hull > 0 else 0
         hull_text = self.font.render(f"HULL: {int(player.hull)}/{int(player.max_hull)}", True, (220, 220, 220))
-        surface.blit(hull_text, (panel_x + 10, panel_y + 8))
-        pygame.draw.rect(surface, (40, 40, 50), (panel_x + 110, panel_y + 10, 135, 12), border_radius=3)
-        pygame.draw.rect(surface, COLOR_HULL_METER, (panel_x + 110, panel_y + 10, int(135 * hull_ratio), 12), border_radius=3)
+        surface.blit(hull_text, (panel_x + 10, panel_y + 9))
+        pygame.draw.rect(surface, (35, 38, 48), (bar_x, panel_y + 12, bar_w, bar_h), border_radius=3)
+        pygame.draw.rect(surface, COLOR_HULL_METER, (bar_x, panel_y + 12, int(bar_w * hull_ratio), bar_h), border_radius=3)
+        pygame.draw.rect(surface, (65, 70, 85), (bar_x, panel_y + 12, bar_w, bar_h), 1, border_radius=3)
 
         # Water tank bar
         tank_ratio = player.water_tank.fill_ratio
         water_text = self.font.render(f"WATER: {int(player.water_tank.current_water)}/{int(player.water_tank.capacity)}L", True, (180, 220, 255))
-        surface.blit(water_text, (panel_x + 10, panel_y + 36))
-        pygame.draw.rect(surface, (20, 40, 60), (panel_x + 110, panel_y + 38, 135, 14), border_radius=3)
-        pygame.draw.rect(surface, COLOR_WATER_METER, (panel_x + 110, panel_y + 38, int(135 * tank_ratio), 14), border_radius=3)
-        
-        # Total mass indicator
-        mass_text = self.font.render(f"AIRCRAFT MASS: {player.total_mass:.1f}x", True, (170, 170, 190))
-        surface.blit(mass_text, (panel_x + 10, panel_y + 58))
+        surface.blit(water_text, (panel_x + 10, panel_y + 35))
+        pygame.draw.rect(surface, (18, 35, 52), (bar_x, panel_y + 38, bar_w, bar_h), border_radius=3)
+        pygame.draw.rect(surface, COLOR_WATER_METER, (bar_x, panel_y + 38, int(bar_w * tank_ratio), bar_h), border_radius=3)
+        pygame.draw.rect(surface, (45, 80, 115), (bar_x, panel_y + 38, bar_w, bar_h), 1, border_radius=3)
 
         # 3. Top-Right: Cash Counter
         cash_surf = self.large_font.render(f"${economy.cash}", True, (100, 255, 140))
