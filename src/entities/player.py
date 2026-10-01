@@ -127,10 +127,17 @@ class Player(pygame.sprite.Sprite):
             lateral_thrust = (forward_dir.x * self.current_thrust_power * 0.55) / self.total_mass
             self.vel.x += lateral_thrust * dt
 
-        # 3. Gravity & Gliding Inertia (Preserves sideways momentum when descending)
+        # 3. Gravity & Horizontal Stabilization
         self.vel.y += GRAVITY * dt
         self.vel.y *= max(0.0, 1.0 - 1.8 * dt)  # Vertical air cushioning
-        self.vel.x *= max(0.0, 1.0 - 0.22 * dt) # Low horizontal drag: coasts smoothly without throttle
+        #self.vel.x *= max(0.0, 1.0 - 0.22 * dt) # Low horizontal drag: coasts smoothly without throttle
+
+        # When NOT pressing Left/Right, quickly brake sideways speed to almost nothing
+        if self.pitch_input == 0.0:
+            self.vel.x *= max(0.0, 1.0 - 1 * dt)
+        else:
+            self.vel.x *= max(0.0, 1.0 - 0.22 * dt)
+
 
         # Terminal velocity clamp for helicopter control
         if abs(self.vel.x) > MAX_SPEED:
