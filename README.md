@@ -1,121 +1,61 @@
-# 🎮 Gamejam Project
+# Critical Caldera 🌋
 
-Welcome to the team Gamejam repository! This project is built using Python and [Pygame](https://www.pygame.org/).
-
-Follow this guide to get the game running on your machine. No deep programming knowledge is required!
+A 2D Physics-Survival / Action-Logistics game built with Pygame for the Gamejam.
 
 ---
 
-## 📌 1. Prerequisites (Do this once)
+## 🎮 Flight Controls
 
-Before starting, make sure you have **Python 3.10+** installed:
-
-1. Download Python from [python.org/downloads](https://www.python.org/downloads/).
-2. ⚠️ **VERY IMPORTANT (Windows)**: When running the installer, make sure to check the box at the bottom that says **"Add python.exe to PATH"** before clicking Install.
-
----
-
-
-## 💻 2. Manual Setup (Terminal)
-
-If you prefer using the terminal or want to run commands manually, follow these steps:
-
-### Step 1: Open Terminal in the project folder
-- **Windows**: In File Explorer, navigate to this project folder, click in the address bar, type `cmd` (or `powershell`), and press **Enter**.
-- **VS Code**: Press <kbd>Ctrl</kbd> + <kbd>`</kbd> (or `Terminal` > `New Terminal` in the top menu).
-
-### Step 2: Create a Virtual Environment (`.venv`)
-A virtual environment keeps all libraries isolated inside this project so they don't interfere with your computer.
-
-- **Windows**:
-  ```bat
-  python -m venv .venv
-  ```
-  *(If `python` doesn't work, try `py -m venv .venv`)*
-
-- **macOS / Linux**:
-  ```bash
-  python3 -m venv .venv
-  ```
-
-### Step 3: Activate the Virtual Environment
-You should see `(.venv)` appear at the beginning of your terminal prompt line.
-
-- **Windows (Command Prompt / CMD)**:
-  ```bat
-  .venv\Scripts\activate.bat
-  ```
-
-- **Windows (PowerShell)**:
-  ```powershell
-  .venv\Scripts\Activate.ps1
-  ```
-
-- **macOS / Linux**:
-  ```bash
-  source .venv/bin/activate
-  ```
-
-### Step 4: Install Dependencies
-Install Pygame and any other required libraries listed in [`requirements.txt`](file:///requirements.txt):
-```bash
-pip install -r requirements.txt
-```
-
-### Step 5: Run the Game
-```bash
-python main.py
-```
-*(You should see a window pop up showing that Pygame is working!)*
+- **Pitch Rotation**: `A` / `D` or `Left` / `Right` (FPV drone acro mode — no auto-leveling!)
+- **Thruster / Throttle**: `W`, `Up Arrow`, or `Spacebar` (Accelerates in the direction the nose is pointed)
+- **Drop Water Payload**: `S`, `Down Arrow`, or `Enter`
+- **Shop / Upgrades**: Land gently on the Helipad and press `E`
+- **Exit**: `Esc`
 
 ---
 
-## 🧑‍💻 3. Working with VS Code
+## 👥 4-Developer Team Architecture & File Ownership
 
-If your team is using [Visual Studio Code](https://code.visualstudio.com/):
+To work concurrently without git merge conflicts, each developer works inside their dedicated folder:
 
-1. Open the project folder in VS Code (`File` > `Open Folder...`).
-2. Open [`main.py`](file:///main.py).
-3. Select the Python interpreter:
-   - Press <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd> (or <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd> on Mac).
-   - Type **`Python: Select Interpreter`** and press **Enter**.
-   - Select the one with **`('.venv': venv)`** in the path (e.g. `./.venv/Scripts/python.exe`).
-4. Now whenever you open a new terminal in VS Code, it will automatically activate `.venv` for you! You can also click the ▶️ "Run Python File" button in the top right corner.
+### 🚁 Developer 1: Flight Physics & Vehicles
+- **Folder**: [`src/entities/`](file:///src/entities/)
+- **Files**:
+  - [`player.py`](file:///src/entities/player.py) — FPV flight physics, momentum, inertia, gravity, dynamic mass calculation (doubles mass when full of water).
+  - [`vehicle.py`](file:///src/entities/vehicle.py) — Aircraft stats & archetypes (Bucket Heli, Water Bomber, Heavy Dropship).
+  - [`water_tank.py`](file:///src/entities/water_tank.py) — Water capacity, siphon mechanics, dumping.
+
+### 🌋 Developer 2: Volcano System & Environmental Hazards
+- **Folder**: [`src/systems/`](file:///src/systems/)
+- **Files**:
+  - [`volcano.py`](file:///src/systems/volcano.py) — Instability Meter (0–100%), cooling calculations, Threat Levels 1 to 4.
+  - [`hazards.py`](file:///src/systems/hazards.py) — Parabolic Lava Bombs (Threat Lvl 2+), Thermal Updraft columns (Threat Lvl 3+).
+  - [`particles.py`](file:///src/systems/particles.py) — Water drops, mist trails, ash storm particles (Threat Lvl 4 Critical Mass).
+
+### 🗺️ Developer 3: World, Logistics & Economy/Shop
+- **Folder**: [`src/world/`](file:///src/world/) & [`src/ui/shop_menu.py`](file:///src/ui/shop_menu.py)
+- **Files**:
+  - [`map.py`](file:///src/world/map.py) — Terrain contour, Lake on left, Helipad, glowing Caldera crater on right.
+  - [`zones.py`](file:///src/world/zones.py) — Lake hovering detection (stability bonus), helipad landing detection, caldera drop precision scoring.
+  - [`economy.py`](file:///src/systems/economy.py) — Cash balance, drop rewards, upgrade purchasing.
+  - [`shop_menu.py`](file:///src/ui/shop_menu.py) — Upgrade menu for pumps, heat shields, thrusters, and new aircraft.
+
+### 🖥️ Developer 4: Core Engine, Camera & HUD
+- **Folder**: [`src/core/`](file:///src/core/), [`src/ui/hud.py`](file:///src/ui/hud.py), [`main.py`](file:///main.py)
+- **Files**:
+  - [`game.py`](file:///src/core/game.py) — Main game loop, delta time (`dt`), subsystem coordinator.
+  - [`camera.py`](file:///src/core/camera.py) — Horizontal/vertical tracking camera with screen shake.
+  - [`hud.py`](file:///src/ui/hud.py) — Pulsing Instability Meter bar, water tank gauge, hull bar, cash counter, warning alerts.
+  - [`settings.py`](file:///src/settings.py) — Shared constants, screen size, world bounds, physics constants, colors.
 
 ---
 
-## 📦 4. Adding New Dependencies
+## 🌿 Recommended Git Workflow
 
-If someone installs a new library during development:
-1. Make sure your virtual environment is active.
-2. Install the library:
-   ```bash
-   pip install <library-name>
-   ```
-3. Update [`requirements.txt`](file:///requirements.txt) so teammates can get it:
-   ```bash
-   pip freeze > requirements.txt
-   ```
-4. Commit and push [`requirements.txt`](file:///requirements.txt) to GitHub.
-5. Other teammates simply pull and run:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
----
-
-## ❓ 5. Common Issues & Troubleshooting
-
-- **`'python' is not recognized as an internal or external command`**:
-  Python is either not installed or was not added to your system PATH. Re-run the Python installer, choose "Modify", and ensure **"Add Python to environment variables"** is checked.
-- **PowerShell error: `execution of scripts is disabled on this system`**:
-  Run this command in PowerShell to allow running local scripts:
-  ```powershell
-  Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-  ```
-  Then run `.venv\Scripts\Activate.ps1` again. Or simply use Command Prompt (`cmd`) or [`setup.bat`](file:///setup.bat).
-- **Need to exit the virtual environment in terminal**:
-  Type:
-  ```bash
-  deactivate
-  ```
+1. **Branch per developer**:
+   - `git checkout -b dev1/flight-physics`
+   - `git checkout -b dev2/volcano-hazards`
+   - `git checkout -b dev3/world-economy`
+   - `git checkout -b dev4/core-hud`
+2. **Pull request / Merge**:
+   - Because file boundaries are strictly separated, merging into `main` will be smooth and conflict-free!
