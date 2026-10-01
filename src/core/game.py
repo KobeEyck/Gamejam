@@ -9,7 +9,7 @@ Integrates all systems and coordinates the primary game loop:
 import sys
 import pygame
 from src.settings import (
-    SCREEN_WIDTH, SCREEN_HEIGHT, FPS, TITLE,
+    SCREEN_WIDTH, SCREEN_HEIGHT, WORLD_WIDTH, WORLD_HEIGHT, FPS, TITLE,
     COLOR_SKY_NORMAL, COLOR_SKY_HAZY, COLOR_SKY_CRITICAL
 )
 from src.core.state_machine import GameState
@@ -36,6 +36,10 @@ class Game:
         # Systems Initialization
         self.camera = Camera()
         self.player = Player()
+        # Start camera centered directly over the helipad spawn point
+        self.camera.offset_x = max(0, min(self.player.pos.x - self.camera.width / 2, WORLD_WIDTH - self.camera.width))
+        self.camera.offset_y = max(0, min(self.player.pos.y - self.camera.height / 2, WORLD_HEIGHT - self.camera.height))
+
         self.volcano = VolcanoSystem()
         self.hazard_mgr = HazardManager()
         self.particle_mgr = ParticleManager()
