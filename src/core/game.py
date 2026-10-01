@@ -40,7 +40,7 @@ class Game:
         self.hazard_mgr = HazardManager()
         self.particle_mgr = ParticleManager()
         self.world_map = WorldMap()
-        self.economy = EconomySystem(starting_cash=100)
+        self.economy = EconomySystem(starting_cash=10000)
         self.hud = HUD()
         self.shop_menu = ShopMenu()
         self.main_menu = MainMenu()

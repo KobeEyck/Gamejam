@@ -41,13 +41,19 @@ class Player(pygame.sprite.Sprite):
         
         # Sprite loading
         self.sprite = None
-        sprite_path = os.path.join("assets", "sprites", "helicopter.png")
+        self.load_sprite()
+
+    def load_sprite(self, sprite_name: str = None):
+        """Loads or updates the vehicle sprite matching the current stats."""
+        name = sprite_name or getattr(self.stats, "sprite_name", "ton.png")
+        sprite_path = os.path.join("assets", "sprites", name)
         if os.path.exists(sprite_path):
             self.sprite = pygame.image.load(sprite_path).convert_alpha()
-        
-        # Dimensions for drawing / collisions
-        self.width = 54
-        self.height = 36
+            self.width, self.height = self.sprite.get_size()
+        else:
+            self.sprite = None
+            self.width = 54
+            self.height = 36
 
     @property
     def total_mass(self) -> float:
