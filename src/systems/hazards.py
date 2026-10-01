@@ -69,6 +69,7 @@ class HazardManager:
             ThermalUpdraft(x=3800, width=320, force=550.0),
         ]
         self.spawn_timer = 0.0
+        self.hazard_rate_multiplier = 1.0
 
     def update(self, dt: float, threat_level: int, player):
         # 1. Update existing Lava Bombs
@@ -88,7 +89,8 @@ class HazardManager:
         # 2. Spawn Lava Bombs if Threat Level >= 2
         if threat_level >= 2:
             self.spawn_timer += dt
-            spawn_interval = 2.5 if threat_level == 2 else (1.4 if threat_level == 3 else 0.7)
+            base_interval = 2.5 if threat_level == 2 else (1.4 if threat_level == 3 else 0.7)
+            spawn_interval = base_interval / self.hazard_rate_multiplier
             if self.spawn_timer >= spawn_interval:
                 self.spawn_timer = 0.0
                 # Parabolic ejection from caldera

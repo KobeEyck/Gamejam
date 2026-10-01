@@ -24,6 +24,7 @@ class ShopMenu:
         player.water_tank.capacity = vehicle.water_capacity
         player.water_tank.current_water = min(player.water_tank.current_water, vehicle.water_capacity)
         player.water_tank.base_siphon_speed = vehicle.siphon_speed
+        player.load_sprite(getattr(vehicle, "sprite_name", None))
 
     def handle_event(self, event, player, economy) -> bool:
         """

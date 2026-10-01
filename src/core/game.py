@@ -40,7 +40,7 @@ class Game:
         self.hazard_mgr = HazardManager()
         self.particle_mgr = ParticleManager()
         self.world_map = WorldMap()
-        self.economy = EconomySystem(starting_cash=100)
+        self.economy = EconomySystem(starting_cash=10000)
         self.hud = HUD()
         self.shop_menu = ShopMenu()
         self.main_menu = MainMenu()
@@ -69,7 +69,17 @@ class Game:
                 
             if self.state == GameState.MENU:
                 action = self.main_menu.handle_event(event)
-                if action == "PLAY":
+                if action and action.startswith("PLAY_"):
+                    mode = action.split("_")[1]
+                    if mode == "NORMAL":
+                        self.volcano.heat_rate_multiplier = 1.0
+                        self.hazard_mgr.hazard_rate_multiplier = 1.0
+                    elif mode == "HARD":
+                        self.volcano.heat_rate_multiplier = 1.5
+                        self.hazard_mgr.hazard_rate_multiplier = 1.5
+                    elif mode == "INSANE":
+                        self.volcano.heat_rate_multiplier = 2.5
+                        self.hazard_mgr.hazard_rate_multiplier = 2.5
                     self.state = GameState.PLAYING
                 elif action == "QUIT":
                     self.running = False

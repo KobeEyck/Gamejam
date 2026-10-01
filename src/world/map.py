@@ -139,12 +139,34 @@ class WorldMap:
             pygame.draw.lines(surface, (255, 80, 10), False, screen_crack, 4)
             pygame.draw.lines(surface, (255, 200, 50), False, screen_crack, 2) # inner glow
 
-        # 2. Draw Lake Water
-        lake_rect = pygame.Rect(LAKE_ZONE_START, LAKE_WATER_LEVEL, 
-                                LAKE_ZONE_END - LAKE_ZONE_START, 80)
-        screen_lake = camera.apply(lake_rect)
-        pygame.draw.rect(surface, COLOR_LAKE, screen_lake)
-        pygame.draw.line(surface, COLOR_LAKE_SURFACE, screen_lake.topleft, screen_lake.topright, 3)
+        # 2. Draw Lake Water (Animated Waves)
+        import time
+        import math
+        t = time.time() * 3.0
+        lake_surface_pts = []
+        for x in range(LAKE_ZONE_START, LAKE_ZONE_END + 10, 20):
+            x = min(x, LAKE_ZONE_END)
+            y = LAKE_WATER_LEVEL + math.sin(x * 0.05 + t) * 4
+            lake_surface_pts.append((x, y))
+            
+        lake_poly = lake_surface_pts + [
+            (LAKE_ZONE_END - 50, LAKE_WATER_LEVEL + 80),
+            (LAKE_ZONE_START + 50, LAKE_WATER_LEVEL + 80)
+        ]
+        
+        screen_lake_poly = [camera.apply(pt) for pt in lake_poly]
+        pygame.draw.polygon(surface, COLOR_LAKE, screen_lake_poly)
+        
+        screen_surf_pts = [camera.apply(pt) for pt in lake_surface_pts]
+        if len(screen_surf_pts) > 1:
+            pygame.draw.lines(surface, COLOR_LAKE_SURFACE, False, screen_surf_pts, 3)
+            
+        # Optional: draw some underwater depth lines
+        for offset_y in [20, 40, 60]:
+            line_pts = [(x, y + offset_y) for x, y in lake_surface_pts[2:-2]]
+            screen_line_pts = [camera.apply(pt) for pt in line_pts]
+            if len(screen_line_pts) > 1:
+                pygame.draw.lines(surface, (50, 150, 230), False, screen_line_pts, 2)
 
         # 3. Draw Concrete Helipad
         helipad_rect = pygame.Rect(HELIPAD_X, HELIPAD_Y, HELIPAD_WIDTH, 12)

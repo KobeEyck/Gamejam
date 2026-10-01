@@ -16,6 +16,7 @@ class VehicleStats:
     max_hull: float              # Health
     siphon_speed: float          # Water fill rate / sec
     cost: int                    # Price in shop (0 for starter)
+    sprite_name: str             # Asset filename in assets/sprites/
 
 # Vehicle presets
 BUCKET_HELI = VehicleStats(
@@ -27,7 +28,8 @@ BUCKET_HELI = VehicleStats(
     water_capacity=50.0,
     max_hull=100.0,
     siphon_speed=30.0,
-    cost=0
+    cost=0,
+    sprite_name="ton.png"
 )
 
 WATER_BOMBER = VehicleStats(
@@ -39,7 +41,8 @@ WATER_BOMBER = VehicleStats(
     water_capacity=300.0,
     max_hull=150.0,
     siphon_speed=65.0,
-    cost=1200
+    cost=1200,
+    sprite_name="helicopter.png"
 )
 
 HEAVY_DROPSHIP = VehicleStats(
@@ -51,5 +54,6 @@ HEAVY_DROPSHIP = VehicleStats(
     water_capacity=800.0,
     max_hull=350.0,
     siphon_speed=120.0,
-    cost=3500
+    cost=3500,
+    sprite_name="Airlane.png"
 )
