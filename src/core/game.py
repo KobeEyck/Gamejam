@@ -85,6 +85,37 @@ class Game:
             self.player.handle_input()
             self.player.update(dt)
 
+            # Terrain Collision & Helipad Friction
+            ground_y = self.world_map.get_terrain_y(self.player.pos.x)
+            if self.player.pos.y >= ground_y - 10:
+                self.player.pos.y = ground_y - 10
+                
+                # Check if above helipad
+                helipad_rect = self.world_map.helipad_zone.rect
+                on_helipad = (helipad_rect.left <= self.player.pos.x <= helipad_rect.right)
+                
+                if on_helipad:
+                    # Shop pad: No damage, slow down so you don't slide off
+                    self.player.vel.x *= 0.85
+                    self.player.vel.y *= 0.85
+                    if self.player.vel.length() < 30:
+                        self.player.angular_velocity *= 0.5
+                else:
+                    # Normal terrain: Crash damage if speed is high
+                    speed = self.player.vel.length()
+                    if speed > 60:
+                        # Take damage based on impact speed
+                        damage = speed * 0.10
+                        self.player.apply_damage(damage)
+                        # Bounce / slow down
+                        self.player.vel.y = -abs(self.player.vel.y) * 0.4
+                        self.player.vel.x *= 0.5
+                        # Camera shake on heavy impact
+                        self.camera.add_shake(min(speed * 0.05, 8.0), 0.2)
+                    else:
+                        # Scrape against the ground gently
+                        self.player.vel *= 0.9
+
             # 2. Check Lake Siphon Zone
             self.is_siphoning, stability = self.world_map.lake_zone.is_player_siphoning(self.player)
             if self.is_siphoning:
