@@ -10,7 +10,8 @@ import sys
 import pygame
 from src.settings import (
     SCREEN_WIDTH, SCREEN_HEIGHT, FPS, TITLE,
-    COLOR_SKY_NORMAL, COLOR_SKY_HAZY, COLOR_SKY_CRITICAL
+    COLOR_SKY_NORMAL, COLOR_SKY_HAZY, COLOR_SKY_CRITICAL,
+    CALDERA_X_CENTER
 )
 from src.core.state_machine import GameState
 from src.core.camera import Camera
@@ -57,7 +58,7 @@ class Game:
         self.hazard_mgr = HazardManager()
         self.particle_mgr = ParticleManager()
         self.world_map = WorldMap()
-        self.economy = EconomySystem(starting_cash=100)
+        self.economy = EconomySystem(starting_cash=10000)
         self.is_siphoning = False
         self.is_landed = False
         self.state = GameState.PLAYING
@@ -139,8 +140,15 @@ class Game:
                     # Normal terrain: Crash damage if speed is high
                     speed = self.player.vel.length()
                     if speed > 60:
-                        # Take damage based on impact speed
-                        damage = speed * 0.10
+                        # The inner crater rims are more forgiving than landing in lava.
+                        crater_offset = abs(self.player.pos.x - CALDERA_X_CENTER)
+                        if crater_offset <= 150:
+                            damage_multiplier = 0.35
+                        elif crater_offset <= 250:
+                            damage_multiplier = 0.04
+                        else:
+                            damage_multiplier = 0.10
+                        damage = speed * damage_multiplier
                         self.player.apply_damage(damage)
                         # Bounce / slow down
                         self.player.vel.y = -abs(self.player.vel.y) * 0.4
