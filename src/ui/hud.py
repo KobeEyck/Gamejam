@@ -100,7 +100,7 @@ class HUD:
             drop_label = self.font.render("💧 PAYLOAD READY - PRESS [SPACE] TO DROP WATER", True, (100, 220, 255))
             surface.blit(drop_label, (SCREEN_WIDTH // 2 - drop_label.get_width() // 2, 70))
         elif landed:
-            land_label = self.font.render("LANDED ON HELIPAD - PRESS [E] TO OPEN SHOP / REPAIR", True, (255, 230, 80))
+            land_label = self.font.render("LANDED ON HELIPAD - PRESS [H] TO OPEN SHOP / REPAIR", True, (255, 230, 80))
             surface.blit(land_label, (SCREEN_WIDTH // 2 - land_label.get_width() // 2, 70))
 
         # 5. Critical Mass Warning

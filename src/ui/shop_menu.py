@@ -35,7 +35,7 @@ class ShopMenu:
                 return False  # Close shop
 
             # 1: Repair Hull ($50)
-            elif event.key == pygame.K_1:
+            elif event.key in (pygame.K_1, pygame.K_KP1):
                 cost = 50
                 if player.hull < player.max_hull:
                     if economy.spend(cost):
@@ -47,7 +47,7 @@ class ShopMenu:
                     self.message = "Hull is already at 100%!"
 
             # 2: Upgrade Intake Pumps ($150)
-            elif event.key == pygame.K_2:
+            elif event.key in (pygame.K_2, pygame.K_KP2):
                 cost = 150 * (player.water_tank.pump_upgrade_level + 1)
                 if economy.spend(cost):
                     player.water_tank.pump_upgrade_level += 1
@@ -56,7 +56,7 @@ class ShopMenu:
                     self.message = "Not enough cash!"
 
             # 3: Reinforced Heat Shielding ($200)
-            elif event.key == pygame.K_3:
+            elif event.key in (pygame.K_3, pygame.K_KP3):
                 cost = 200 * (player.shield_level + 1)
                 if economy.spend(cost):
                     player.shield_level += 1
@@ -65,7 +65,7 @@ class ShopMenu:
                     self.message = "Not enough cash!"
 
             # 4: Overclocked Thrusters ($250)
-            elif event.key == pygame.K_4:
+            elif event.key in (pygame.K_4, pygame.K_KP4):
                 cost = 250 * (player.thruster_level + 1)
                 if economy.spend(cost):
                     player.thruster_level += 1
@@ -74,7 +74,7 @@ class ShopMenu:
                     self.message = "Not enough cash!"
 
             # 5: Buy starter Bucket Heli ($0)
-            elif event.key == pygame.K_5:
+            elif event.key in (pygame.K_5, pygame.K_KP5):
                 if player.stats.name == BUCKET_HELI.name:
                     self.message = "You are already flying the Bucket Heli."
                 elif economy.spend(BUCKET_HELI.cost):
@@ -84,7 +84,7 @@ class ShopMenu:
                     self.message = "Not enough cash for Bucket Heli!"
 
             # 6: Buy Water Bomber ($1200)
-            elif event.key == pygame.K_6:
+            elif event.key in (pygame.K_6, pygame.K_KP6):
                 if player.stats.name == WATER_BOMBER.name:
                     self.message = "You are already flying the Water Bomber."
                 elif economy.spend(WATER_BOMBER.cost):
@@ -94,7 +94,7 @@ class ShopMenu:
                     self.message = "Not enough cash for Water Bomber!"
 
             # 7: Buy Heavy Dropship ($3500)
-            elif event.key == pygame.K_7:
+            elif event.key in (pygame.K_7, pygame.K_KP7):
                 if player.stats.name == HEAVY_DROPSHIP.name:
                     self.message = "You are already flying the Heavy Dropship."
                 elif economy.spend(HEAVY_DROPSHIP.cost):
@@ -145,5 +145,5 @@ class ShopMenu:
             surface.blit(msg_surf, ((SCREEN_WIDTH - msg_surf.get_width()) // 2, 480))
 
         # Exit instruction
-        exit_surf = self.hint_font.render("Press [E] or [ESC] to return to flight.", True, (160, 160, 180))
+        exit_surf = self.hint_font.render("Press [E], [H] or [ESC] to return to flight.", True, (160, 160, 180))
         surface.blit(exit_surf, ((SCREEN_WIDTH - exit_surf.get_width()) // 2, 540))
