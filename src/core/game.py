@@ -53,6 +53,11 @@ class Game:
         # Ephemeral states
         self.is_siphoning = False
         self.is_landed = False
+        self.paused = False
+        self.pause_menu_open = False
+        self.pause_option_rect = pygame.Rect(20, 62, 150, 34)
+        self.restart_option_rect = pygame.Rect(20, 102, 150, 34)
+        self.close_option_rect = pygame.Rect(20, 142, 150, 34)
 
         # Background Music & Audio
         self.music_muted = False
@@ -122,6 +127,8 @@ class Game:
         self.economy = EconomySystem(starting_cash=10000)
         self.is_siphoning = False
         self.is_landed = False
+        self.paused = False
+        self.pause_menu_open = False
         self.state = GameState.PLAYING
 
         # Resume main background arcade music
@@ -138,6 +145,16 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if self.state == GameState.PLAYING and self.paused and self.pause_menu_open:
+                    if self.pause_option_rect.collidepoint(event.pos):
+                        self.toggle_pause()
+                        self.pause_menu_open = False
+                    elif self.restart_option_rect.collidepoint(event.pos):
+                        self.restart_game()
+                    elif self.close_option_rect.collidepoint(event.pos):
+                        self.pause_menu_open = False
                 
             if self.state == GameState.MENU:
                 action = self.main_menu.handle_event(event)
@@ -159,6 +176,13 @@ class Game:
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE and self.state in (GameState.PLAYING, GameState.GAME_OVER):
                     self.running = False
+
+                elif event.key == pygame.K_p and self.state == GameState.PLAYING:
+                    self.toggle_pause()
+                    self.pause_menu_open = self.paused
+
+                elif event.key == pygame.K_r and self.state == GameState.PLAYING:
+                    self.restart_game()
 
                 elif event.key == pygame.K_s and self.state == GameState.GAME_OVER:
                     self.restart_game()
@@ -200,11 +224,20 @@ class Game:
                 if not self.shop_menu.handle_event(event, self.player, self.economy):
                     self.state = GameState.PLAYING
 
+    def toggle_pause(self):
+        """Pause or resume the active flight."""
+        self.paused = not self.paused
+        if self.paused:
+            if self.engine_channel:
+                self.engine_channel.pause()
+        elif self.engine_channel and self.player.is_thrusting and not self.music_muted:
+            self.engine_channel.unpause()
+
     def update(self, dt: float):
         if self.hit_sound_cooldown > 0:
             self.hit_sound_cooldown -= dt
 
-        if self.state == GameState.PLAYING:
+        if self.state == GameState.PLAYING and not self.paused:
             # 1. Update Player Input & Movement
             self.player.handle_input()
             self.player.update(dt)
@@ -356,6 +389,8 @@ class Game:
         # 6. Draw HUD
         self.hud.draw(self.screen, self.volcano, self.player, self.economy, self.is_siphoning, self.is_landed)
 
+        self.draw_pause_controls()
+
         # 7. Draw Shop Overlay if open
         if self.state == GameState.SHOP:
             self.shop_menu.draw(self.screen, self.player, self.economy)
@@ -379,6 +414,34 @@ class Game:
             self.screen.blit(sub, ((SCREEN_WIDTH - sub.get_width()) // 2, 360))
 
         pygame.display.flip()
+
+    def draw_pause_controls(self):
+        """Draws pause options after the player presses P."""
+        if self.state != GameState.PLAYING or not self.paused:
+            return
+
+        mouse_pos = pygame.mouse.get_pos()
+
+        def draw_button(rect, label, base_color):
+            color = tuple(min(255, channel + 25) for channel in base_color) if rect.collidepoint(mouse_pos) else base_color
+            pygame.draw.rect(self.screen, color, rect, border_radius=6)
+            pygame.draw.rect(self.screen, (245, 245, 245), rect, 2, border_radius=6)
+            text = pygame.font.Font(None, 24).render(label, True, (255, 255, 255))
+            self.screen.blit(text, text.get_rect(center=rect.center))
+
+        if self.paused:
+            overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
+            overlay.fill((10, 10, 20, 125))
+            self.screen.blit(overlay, (0, 0))
+            title = pygame.font.Font(None, 64).render("PAUSED", True, (255, 255, 255))
+            self.screen.blit(title, title.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)))
+
+        panel = pygame.Rect(12, 12, 175, 174)
+        pygame.draw.rect(self.screen, (20, 25, 40), panel, border_radius=8)
+        pygame.draw.rect(self.screen, (220, 220, 230), panel, 2, border_radius=8)
+        draw_button(self.pause_option_rect, "RESUME", (45, 130, 75))
+        draw_button(self.restart_option_rect, "RESTART", (145, 85, 55))
+        draw_button(self.close_option_rect, "CLOSE", (100, 100, 100))
 
     def run(self):
         while self.running:

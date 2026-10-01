@@ -91,6 +91,8 @@ class MainMenu:
             ("D / RIGHT ARROW - Tilt right", text_font, (235, 235, 240)),
             ("SPACE / S / DOWN ARROW - Drop your water", text_font, (235, 235, 240)),
             ("H - Open the shop when landed on the helipad", text_font, (235, 235, 240)),
+            ("P - Pause the game and show the pause options", text_font, (235, 235, 240)),
+            ("R - Restart the current game", text_font, (235, 235, 240)),
             ("ESC - Exit the game", text_font, (235, 235, 240)),
             ("", text_font, (235, 235, 240)),
             ("OBJECTIVE", heading_font, (255, 215, 60)),
