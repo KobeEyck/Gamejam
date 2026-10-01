@@ -149,7 +149,8 @@ class WorldMap:
             y = LAKE_WATER_LEVEL + math.sin(x * 0.05 + t) * 4
             lake_surface_pts.append((x, y))
             
-        lake_poly = lake_surface_pts + [
+        lake_poly = [(LAKE_ZONE_START, LAKE_WATER_LEVEL)] + lake_surface_pts + [
+            (LAKE_ZONE_END, LAKE_WATER_LEVEL),
             (LAKE_ZONE_END - 50, LAKE_WATER_LEVEL + 80),
             (LAKE_ZONE_START + 50, LAKE_WATER_LEVEL + 80)
         ]
