@@ -207,13 +207,6 @@ class Player(pygame.sprite.Sprite):
             rot_rect = rotated_sprite.get_rect(center=(int(screen_pos[0]), int(screen_pos[1])))
             surface.blit(rotated_sprite, rot_rect)
 
-            # Rotor / engine wash effect when thrusting
-            if self.is_thrusting:
-                for _ in range(2):
-                    wash_x = screen_pos[0] + random.uniform(-14, 14)
-                    wash_y = screen_pos[1] + 20 + random.uniform(0, 8)
-                    pygame.draw.circle(surface, (210, 220, 235), (wash_x, wash_y), random.uniform(2, 4))
-
         else:
             # Fallback polygonal rendering
             rad = math.radians(self.angle)
@@ -244,12 +237,14 @@ class Player(pygame.sprite.Sprite):
                                  (-12 * cos_a + screen_pos[0], -12 * sin_a + screen_pos[1]), 
                                  (flame_tail_x, flame_tail_y), 4)
 
-        # Draw water tank indicator beneath craft
+        # Draw water tank indicator cleanly beneath craft
         if self.water_tank.current_water > 0:
             fill_pct = self.water_tank.fill_ratio
-            tank_w = 28
+            tank_w = 30
             tank_h = 5
-            tank_rect = pygame.Rect(screen_pos[0] - tank_w // 2, screen_pos[1] + 24, tank_w, tank_h)
-            pygame.draw.rect(surface, (25, 25, 35), tank_rect, border_radius=2)
-            fill_rect = pygame.Rect(screen_pos[0] - tank_w // 2, screen_pos[1] + 24, int(tank_w * fill_pct), tank_h)
-            pygame.draw.rect(surface, (60, 180, 255), fill_rect, border_radius=2)
+            tank_offset_y = 46
+            tank_rect = pygame.Rect(screen_pos[0] - tank_w // 2, screen_pos[1] + tank_offset_y, tank_w, tank_h)
+            pygame.draw.rect(surface, (20, 25, 35), tank_rect, border_radius=2)
+            fill_rect = pygame.Rect(screen_pos[0] - tank_w // 2, screen_pos[1] + tank_offset_y, int(tank_w * fill_pct), tank_h)
+            pygame.draw.rect(surface, (60, 185, 255), fill_rect, border_radius=2)
+            pygame.draw.rect(surface, (80, 120, 160), tank_rect, 1, border_radius=2)
