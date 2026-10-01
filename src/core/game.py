@@ -155,12 +155,15 @@ class Game:
             # 6. Environmental Hazards (Lava bombs & Updrafts)
             self.hazard_mgr.update(dt, self.volcano.threat_level, self.player)
 
-            # 7. Falling Water Payload & Caldera Hit Detection
+            # 7. Falling Water Payload & Terrain/Caldera Collision Detection
             for payload in self.particle_mgr.water_payloads:
                 if payload["alive"]:
-                    # Check if reached ground / caldera elevation
-                    if payload["pos"].y >= self.world_map.caldera_zone.y:
+                    # Check if reached ground at its current X position
+                    ground_y = self.world_map.get_terrain_y(payload["pos"].x)
+                    if payload["pos"].y >= ground_y:
                         payload["alive"] = False
+                        
+                        # Evaluate if the hit was inside the caldera
                         is_hit, is_direct, accuracy = self.world_map.caldera_zone.evaluate_payload_hit(payload["pos"])
                         if is_hit:
                             # Cool down the volcano
