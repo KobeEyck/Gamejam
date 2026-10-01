@@ -9,9 +9,8 @@ Integrates all systems and coordinates the primary game loop:
 import sys
 import pygame
 from src.settings import (
-    SCREEN_WIDTH, SCREEN_HEIGHT, FPS, TITLE,
-    COLOR_SKY_NORMAL, COLOR_SKY_HAZY, COLOR_SKY_CRITICAL,
-    CALDERA_X_CENTER
+    CALDERA_X_CENTER, SCREEN_WIDTH, SCREEN_HEIGHT, WORLD_WIDTH, WORLD_HEIGHT, FPS, TITLE,
+    COLOR_SKY_NORMAL, COLOR_SKY_HAZY, COLOR_SKY_CRITICAL
 )
 from src.core.state_machine import GameState
 from src.core.camera import Camera
@@ -37,6 +36,10 @@ class Game:
         # Systems Initialization
         self.camera = Camera()
         self.player = Player()
+        # Start camera centered directly over the helipad spawn point
+        self.camera.offset_x = max(0, min(self.player.pos.x - self.camera.width / 2, WORLD_WIDTH - self.camera.width))
+        self.camera.offset_y = max(0, min(self.player.pos.y - self.camera.height / 2, WORLD_HEIGHT - self.camera.height))
+
         self.volcano = VolcanoSystem()
         self.hazard_mgr = HazardManager()
         self.particle_mgr = ParticleManager()
@@ -179,12 +182,15 @@ class Game:
             # 6. Environmental Hazards (Lava bombs & Updrafts)
             self.hazard_mgr.update(dt, self.volcano.threat_level, self.player)
 
-            # 7. Falling Water Payload & Caldera Hit Detection
+            # 7. Falling Water Payload & Terrain/Caldera Collision Detection
             for payload in self.particle_mgr.water_payloads:
                 if payload["alive"]:
-                    # Check if reached ground / caldera elevation
-                    if payload["pos"].y >= self.world_map.caldera_zone.y:
+                    # Check if reached ground at its current X position
+                    ground_y = self.world_map.get_terrain_y(payload["pos"].x)
+                    if payload["pos"].y >= ground_y:
                         payload["alive"] = False
+                        
+                        # Evaluate if the hit was inside the caldera
                         is_hit, is_direct, accuracy = self.world_map.caldera_zone.evaluate_payload_hit(payload["pos"])
                         if is_hit:
                             # Cool down the volcano

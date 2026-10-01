@@ -130,8 +130,9 @@ class ShopMenu:
             f"[2] Intake Pumps Lvl {player.water_tank.pump_upgrade_level + 1} (${pump_cost}) - Faster lake siphoning",
             f"[3] Heat Shielding Lvl {player.shield_level + 1} (${shield_cost}) - Reduces lava bomb damage",
             f"[4] Overclock Thrusters Lvl {player.thruster_level + 1} (${thrust_cost}) - Fights updrafts & climbs faster",
-            f"[5] Aircraft: Water Bomber (${WATER_BOMBER.cost}) - Fast aircraft with large capacity, but cannot hover.",
+            f"[5] Aircraft: Water Bomber (${WATER_BOMBER.cost}) - Fast ton with large capacity, but cannot hover.",
             f"[6] Aircraft: Heavy Dropship (${HEAVY_DROPSHIP.cost}) - Huge capacity and heavy armor, but very slow.",
+            f"[7] Aircraft: Heavy Dropship (${HEAVY_DROPSHIP.cost}) - Dual-rotor sci-fi craft. Massive water capacity and heavy armor.",
         ]
 
         start_y = 180
