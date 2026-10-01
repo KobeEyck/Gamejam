@@ -74,18 +74,9 @@ class ShopMenu:
                 else:
                     self.message = "Not enough cash!"
 
-            # 5: Buy starter Bucket Heli ($0)
-            elif event.key in (pygame.K_5, pygame.K_KP5):
-                if player.stats.name == BUCKET_HELI.name:
-                    self.message = "You are already flying the Bucket Heli."
-                elif economy.spend(BUCKET_HELI.cost):
-                    self._apply_vehicle(player, BUCKET_HELI)
-                    self.message = "Equipped Bucket Heli!"
-                else:
-                    self.message = "Not enough cash for Bucket Heli!"
 
-            # 6: Buy Water Bomber ($1200)
-            elif event.key in (pygame.K_6, pygame.K_KP6):
+            # 5: Buy Water Bomber ($1200)
+            elif event.key in (pygame.K_5, pygame.K_KP5):
                 if player.stats.name == WATER_BOMBER.name:
                     self.message = "You are already flying the Water Bomber."
                 elif economy.spend(WATER_BOMBER.cost):
@@ -94,8 +85,8 @@ class ShopMenu:
                 else:
                     self.message = "Not enough cash for Water Bomber!"
 
-            # 7: Buy Heavy Dropship ($3500)
-            elif event.key in (pygame.K_7, pygame.K_KP7):
+            # 6: Buy Heavy Dropship ($3500)
+            elif event.key in (pygame.K_6, pygame.K_KP6):
                 if player.stats.name == HEAVY_DROPSHIP.name:
                     self.message = "You are already flying the Heavy Dropship."
                 elif economy.spend(HEAVY_DROPSHIP.cost):
@@ -131,8 +122,7 @@ class ShopMenu:
             f"[3] Heat Shielding Lvl {player.shield_level + 1} (${shield_cost}) - Reduces lava bomb damage",
             f"[4] Overclock Thrusters Lvl {player.thruster_level + 1} (${thrust_cost}) - Fights updrafts & climbs faster",
             f"[5] Aircraft: Water Bomber (${WATER_BOMBER.cost}) - Fast ton with large capacity, but cannot hover.",
-            f"[6] Aircraft: Heavy Dropship (${HEAVY_DROPSHIP.cost}) - Huge capacity and heavy armor, but very slow.",
-            f"[7] Aircraft: Heavy Dropship (${HEAVY_DROPSHIP.cost}) - Dual-rotor sci-fi craft. Massive water capacity and heavy armor.",
+            f"[6] Aircraft: Heavy Dropship (${HEAVY_DROPSHIP.cost}) - Dual-rotor sci-fi craft. Massive water capacity and heavy armor.",
         ]
 
         start_y = 180
