@@ -6,6 +6,7 @@ Integrates all systems and coordinates the primary game loop:
 - Map, water siphoning, caldera scoring & economy (Dev 3)
 - Camera tracking, HUD & state machine (Dev 4)
 """
+import os
 import sys
 import pygame
 from src.settings import (
@@ -44,7 +45,7 @@ class Game:
         self.hazard_mgr = HazardManager()
         self.particle_mgr = ParticleManager()
         self.world_map = WorldMap()
-        self.economy = EconomySystem(starting_cash=10000)
+        self.economy = EconomySystem(starting_cash=100000)
         self.hud = HUD()
         self.shop_menu = ShopMenu()
         self.main_menu = MainMenu()
@@ -52,6 +53,46 @@ class Game:
         # Ephemeral states
         self.is_siphoning = False
         self.is_landed = False
+
+        # Background Music & Audio
+        self.music_muted = False
+        music_path = os.path.join("assets", "mondamusic-retro-arcade-game-music-512837.mp3")
+        if os.path.exists(music_path):
+            try:
+                pygame.mixer.music.load(music_path)
+                pygame.mixer.music.set_volume(0.35)
+                pygame.mixer.music.play(-1)
+            except Exception as e:
+                print(f"Could not load music: {e}")
+
+        # Helicopter Engine / Rotor Sound
+        self.engine_sound = None
+        self.engine_channel = None
+        self.current_engine_vol = 0.0
+        engine_path = os.path.join("assets", "flutie8211-helicopter-hovering-598081.mp3")
+        if os.path.exists(engine_path):
+            try:
+                self.engine_sound = pygame.mixer.Sound(engine_path)
+                self.engine_channel = pygame.mixer.Channel(1)
+            except Exception as e:
+                print(f"Could not load engine sound: {e}")
+
+        # Impact / Collision Explosion Sound
+        self.hit_sound = None
+        self.hit_sound_cooldown = 0.0
+        hit_path = os.path.join("assets", "ElevenLabs_Explosive_fuel_ignition_with_roaring_flames.mp3")
+        if os.path.exists(hit_path):
+            try:
+                self.hit_sound = pygame.mixer.Sound(hit_path)
+                self.hit_sound.set_volume(0.65)
+            except Exception as e:
+                print(f"Could not load hit sound: {e}")
+
+    def play_hit_sound(self):
+        """Plays explosive impact sound with roaring flames on hard collision."""
+        if not self.music_muted and self.hit_sound and self.hit_sound_cooldown <= 0:
+            self.hit_sound.play()
+            self.hit_sound_cooldown = 0.45
 
     def restart_game(self):
         """Reset gameplay systems and start a new run."""
@@ -102,6 +143,16 @@ class Game:
                     elif self.state == GameState.SHOP:
                         self.state = GameState.PLAYING
 
+                # Mute/unmute music & engine audio toggle
+                elif event.key == pygame.K_m:
+                    self.music_muted = not self.music_muted
+                    if self.music_muted:
+                        pygame.mixer.music.pause()
+                        if self.engine_channel:
+                            self.engine_channel.set_volume(0.0)
+                    else:
+                        pygame.mixer.music.unpause()
+
                 # Water Drop Release (Spacebar, S, Down Arrow, or Return)
                 elif event.key in (pygame.K_SPACE, pygame.K_s, pygame.K_DOWN, pygame.K_RETURN) and self.state == GameState.PLAYING:
                     if self.player.water_tank.current_water > 0:
@@ -119,6 +170,9 @@ class Game:
                     self.state = GameState.PLAYING
 
     def update(self, dt: float):
+        if self.hit_sound_cooldown > 0:
+            self.hit_sound_cooldown -= dt
+
         if self.state == GameState.PLAYING:
             # 1. Update Player Input & Movement
             self.player.handle_input()
@@ -153,6 +207,8 @@ class Game:
                             damage_multiplier = 0.10
                         damage = speed * damage_multiplier
                         self.player.apply_damage(damage)
+                        # Explosive impact sound when crashing into terrain
+                        self.play_hit_sound()
                         # Bounce / slow down
                         self.player.vel.y = -abs(self.player.vel.y) * 0.4
                         self.player.vel.x *= 0.5
@@ -180,7 +236,9 @@ class Game:
                 self.camera.add_shake(4.0, 0.2)
 
             # 6. Environmental Hazards (Lava bombs & Updrafts)
-            self.hazard_mgr.update(dt, self.volcano.threat_level, self.player)
+            hit_by_bomb = self.hazard_mgr.update(dt, self.volcano.threat_level, self.player)
+            if hit_by_bomb:
+                self.play_hit_sound()
 
             # 7. Falling Water Payload & Terrain/Caldera Collision Detection
             for payload in self.particle_mgr.water_payloads:
@@ -208,6 +266,31 @@ class Game:
 
             # 10. HUD
             self.hud.update(dt)
+
+        # 11. Update Helicopter Engine Audio (Dynamic throttle roar)
+        if self.engine_sound and self.engine_channel:
+            if self.state == GameState.PLAYING and not self.music_muted:
+                if not self.engine_channel.get_busy():
+                    self.engine_channel.play(self.engine_sound, loops=-1)
+
+                # Throttle pressed = loud turbine roar (0.75)
+                # Airborne cruise = moderate hover (0.35)
+                # Landed on ground = low idle rumble (0.15)
+                if self.player.is_thrusting:
+                    target_vol = 0.75
+                elif self.is_landed:
+                    target_vol = 0.15
+                else:
+                    target_vol = 0.35
+
+                # Smoothly interpolate volume transitions
+                self.current_engine_vol += (target_vol - self.current_engine_vol) * min(7.0 * dt, 1.0)
+                self.engine_channel.set_volume(self.current_engine_vol)
+            else:
+                # Silence engine when in menus or muted
+                if self.engine_channel.get_busy():
+                    self.current_engine_vol = 0.0
+                    self.engine_channel.set_volume(0.0)
 
     def draw(self):
         if self.state == GameState.MENU:

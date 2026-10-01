@@ -71,8 +71,9 @@ class HazardManager:
         self.spawn_timer = 0.0
         self.hazard_rate_multiplier = 1.0
 
-    def update(self, dt: float, threat_level: int, player):
+    def update(self, dt: float, threat_level: int, player) -> bool:
         # 1. Update existing Lava Bombs
+        hit_player = False
         for bomb in self.lava_bombs:
             bomb.update(dt)
             # Check collision with player
@@ -83,6 +84,7 @@ class HazardManager:
                     player.apply_damage(bomb.damage)
                     # Vaporize 50% water if hit
                     player.water_tank.current_water *= 0.5
+                    hit_player = True
                     
         self.lava_bombs = [b for b in self.lava_bombs if b.alive]
 
@@ -103,6 +105,8 @@ class HazardManager:
         if threat_level >= 3:
             for updraft in self.updrafts:
                 updraft.check_and_apply(player, dt)
+
+        return hit_player
 
     def draw(self, surface: pygame.Surface, camera, threat_level: int):
         # Draw updrafts if active
