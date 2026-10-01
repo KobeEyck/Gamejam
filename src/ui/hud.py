@@ -25,6 +25,10 @@ class HUD:
         self.large_font = pygame.font.Font(None, 34)
         self.alert_font = pygame.font.Font(None, 40)
         self.pulse_timer = 0.0
+        
+        # Pre-allocated UI panel background
+        self.panel_bg = pygame.Surface((260, 80), pygame.SRCALPHA)
+        self.panel_bg.fill(COLOR_HUD_BG)
 
     def update(self, dt: float):
         self.pulse_timer += dt * 4.0
@@ -64,11 +68,7 @@ class HUD:
         # 2. Bottom-Left: Water Payload Tank & Hull
         panel_x = 24
         panel_y = 620
-        panel_w = 260
-        panel_h = 80
-        panel_bg = pygame.Surface((panel_w, panel_h), pygame.SRCALPHA)
-        panel_bg.fill(COLOR_HUD_BG)
-        surface.blit(panel_bg, (panel_x, panel_y))
+        surface.blit(self.panel_bg, (panel_x, panel_y))
 
         # Hull bar
         hull_ratio = player.hull / player.max_hull if player.max_hull > 0 else 0

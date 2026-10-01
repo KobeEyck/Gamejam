@@ -6,9 +6,11 @@ Implements FPV drone acro physics:
 - Thrust vectoring
 - Dynamic mass scaling based on water payload (heavy/sluggish when full, twitchy when empty)
 """
+import os
+import random
 import math
 import pygame
-from src.settings import GRAVITY, AIR_RESISTANCE, ANGULAR_DRAG, WORLD_WIDTH, WORLD_HEIGHT
+from src.settings import GRAVITY, AIR_RESISTANCE, ANGULAR_DRAG, MAX_SPEED, WORLD_WIDTH, WORLD_HEIGHT
 from src.entities.vehicle import BUCKET_HELI, VehicleStats
 from src.entities.water_tank import WaterTank
 
@@ -35,10 +37,17 @@ class Player(pygame.sprite.Sprite):
         # Control states
         self.is_thrusting = False
         self.pitch_input = 0.0
+        self.facing_right = True
+        
+        # Sprite loading
+        self.sprite = None
+        sprite_path = os.path.join("assets", "sprites", "helicopter.png")
+        if os.path.exists(sprite_path):
+            self.sprite = pygame.image.load(sprite_path).convert_alpha()
         
         # Dimensions for drawing / collisions
-        self.width = 44
-        self.height = 20
+        self.width = 54
+        self.height = 36
 
     @property
     def total_mass(self) -> float:
@@ -79,14 +88,28 @@ class Player(pygame.sprite.Sprite):
         self.vel += (force / self.total_mass) * dt
 
     def update(self, dt: float):
-        # 1. Pitch Rotation (Acro style: user changes angular velocity)
+        # 1. Pitch Rotation & Auto-Leveling
         rot_accel = self.pitch_input * self.stats.max_pitch_rate
         self.angular_velocity += rot_accel * dt
         self.angular_velocity *= ANGULAR_DRAG
         self.angle += self.angular_velocity * dt
-        
-        # Keep angle between -180 and 180
-        self.angle = (self.angle + 180) % 360 - 180
+
+        # Very slow, gentle auto-leveling when player releases pitch keys (holds bank angle smoothly)
+        if self.pitch_input == 0.0:
+            angle_error = -90.0 - self.angle
+            self.angle += angle_error * min(0.8 * dt, 1.0)
+            self.angular_velocity *= 0.95
+
+        # Clamp pitch to maximal tilt limit (±25° from upright -90° for realistic helicopter bank)
+        MAX_TILT = 25.0
+        min_angle = -90.0 - MAX_TILT
+        max_angle = -90.0 + MAX_TILT
+        if self.angle < min_angle:
+            self.angle = min_angle
+            self.angular_velocity = 0.0
+        elif self.angle > max_angle:
+            self.angle = max_angle
+            self.angular_velocity = 0.0
 
         # 2. Thrust Vector Calculation
         rad = math.radians(self.angle)
@@ -95,62 +118,198 @@ class Player(pygame.sprite.Sprite):
 
         if self.is_thrusting:
             thrust_accel = (forward_dir * self.current_thrust_power) / self.total_mass
+            # High responsiveness when banked at 25 degrees
+            thrust_accel.x *= 2.2
+            thrust_accel.y *= 0.85
             self.vel += thrust_accel * dt
+        elif self.pitch_input != 0.0:
+            # Gentle horizontal-only push when steering without holding throttle (no climb)
+            lateral_thrust = (forward_dir.x * self.current_thrust_power * 0.55) / self.total_mass
+            self.vel.x += lateral_thrust * dt
 
-        # 3. Gravity & Drag
-        gravity_force = pygame.Vector2(0, GRAVITY)
-        self.vel += gravity_force * dt
-        self.vel *= AIR_RESISTANCE
+        # 3. Gravity & Horizontal Stabilization
+        self.vel.y += GRAVITY * dt
+        self.vel.y *= max(0.0, 1.0 - 1.8 * dt)  # Vertical air cushioning
+        #self.vel.x *= max(0.0, 1.0 - 0.22 * dt) # Low horizontal drag: coasts smoothly without throttle
+
+        # When NOT pressing Left/Right, quickly brake sideways speed to almost nothing
+        if self.pitch_input == 0.0:
+            self.vel.x *= max(0.0, 1.0 - 1 * dt)
+        else:
+            self.vel.x *= max(0.0, 1.0 - 0.22 * dt)
+
+
+        # Terminal velocity clamp for helicopter control
+        if abs(self.vel.x) > MAX_SPEED:
+            self.vel.x = math.copysign(MAX_SPEED, self.vel.x)
+        if self.vel.y > 400.0:
+            self.vel.y = 400.0
+        elif self.vel.y < -350.0:
+            self.vel.y = -350.0
 
         # 4. Integrate Position
         self.pos += self.vel * dt
+
+        # Update facing orientation based on horizontal velocity
+        if self.vel.x > 1:
+            self.facing_right = True
+        elif self.vel.x < -1:
+            self.facing_right = False
 
         # 5. Boundaries Clamping
         self.pos.x = max(20, min(self.pos.x, WORLD_WIDTH - 20))
         self.pos.y = max(20, min(self.pos.y, WORLD_HEIGHT - 30))
 
     def draw(self, surface: pygame.Surface, camera):
-        """Renders the player aircraft rotated according to pitch."""
+        """Renders the player as a helicopter with a hanging bucket."""
         screen_pos = camera.apply(self.pos)
         
-        # Build base polygonal shape of vehicle
         rad = math.radians(self.angle)
         cos_a = math.cos(rad)
         sin_a = math.sin(rad)
         
-        # Local offsets: nose, left-wing, right-wing, rear
-        local_points = [
-            (22, 0),    # Nose
-            (-16, -10), # Top/Left wing
-            (-12, 0),   # Body center indent
-            (-16, 10),  # Bottom/Right wing
-        ]
-        
-        transformed_points = []
-        for lx, ly in local_points:
+        def transform(lx, ly):
+            # lx is Roof (+)/Belly (-), ly is Nose (+)/Tail (-)
             rx = lx * cos_a - ly * sin_a + screen_pos[0]
             ry = lx * sin_a + ly * cos_a + screen_pos[1]
-            transformed_points.append((rx, ry))
-            
-        # Draw vehicle body
-        body_color = (220, 220, 240) if self.water_tank.fill_ratio < 0.5 else (120, 180, 255)
-        pygame.draw.polygon(surface, body_color, transformed_points)
-        pygame.draw.polygon(surface, (40, 40, 60), transformed_points, 2)
+            return (rx, ry)
+
+        # 1. Draw Helicopter Body
+        heli_body = [
+            transform(-5, 18),   # Lower nose
+            transform(5, 18),    # Upper nose
+            transform(10, 8),    # Cockpit top
+            transform(10, -8),   # Engine top
+            transform(2, -12),   # Upper tail base
+            transform(2, -35),   # Tail end top
+            transform(-2, -35),  # Tail end bottom
+            transform(-2, -12),  # Lower tail base
+            transform(-8, -5),   # Belly rear
+            transform(-8, 8),    # Belly front
+        ]
         
-        # Draw thruster flame if active
-        if self.is_thrusting:
-            flame_tail_x = -26 * cos_a + screen_pos[0]
-            flame_tail_y = -26 * sin_a + screen_pos[1]
-            pygame.draw.line(surface, (255, 180, 50), 
-                             (-12 * cos_a + screen_pos[0], -12 * sin_a + screen_pos[1]), 
-                             (flame_tail_x, flame_tail_y), 4)
+        body_color = (220, 60, 50) if self.water_tank.fill_ratio < 0.5 else (180, 40, 30)
+        pygame.draw.polygon(surface, body_color, heli_body)
+        pygame.draw.polygon(surface, (40, 40, 40), heli_body, 2)
+        
+        # Cockpit window
+        window = [
+            transform(5, 17),
+            transform(9, 8),
+            transform(3, 8),
+            transform(-1, 17),
+        ]
+        pygame.draw.polygon(surface, (150, 220, 255), window)
+        
+        # Skids (Landing gear)
+        pygame.draw.line(surface, (100, 100, 100), transform(-8, 6), transform(-14, 6), 2)
+        pygame.draw.line(surface, (100, 100, 100), transform(-8, -6), transform(-14, -6), 2)
+        pygame.draw.line(surface, (150, 150, 150), transform(-14, 12), transform(-14, -12), 3)
+
+        # Main Rotor
+        pygame.draw.line(surface, (80, 80, 80), transform(10, -2), transform(16, -2), 3) # Mast
+        import time
+        blade_span = 24 if not self.is_thrusting else 24 * abs(math.cos(time.time() * 30))
+        pygame.draw.line(surface, (200, 200, 200), transform(16, -blade_span), transform(16, blade_span), 2)
+        
+        # Tail Rotor
+        tail_span = 8 * abs(math.cos(time.time() * 30)) if self.is_thrusting else 8
+        pygame.draw.line(surface, (180, 180, 180), transform(0, -35), transform(tail_span, -35), 2)
+        pygame.draw.line(surface, (180, 180, 180), transform(0, -35), transform(-tail_span, -35), 2)
+
+        # 2. Draw Hanging Water Bucket
+        # Attachment point at belly center
+        attach_x, attach_y = transform(-8, 0)
+        bucket_y_top = attach_y + 35
+        
+        # Draw cable
+        pygame.draw.line(surface, (80, 80, 80), (attach_x, attach_y), (attach_x, bucket_y_top), 2)
+        
+        # Bucket dimensions
+        bw_top = 12
+        bw_bot = 8
+        bh = 18
+        
+        bucket_pts = [
+            (attach_x - bw_top, bucket_y_top),
+            (attach_x + bw_top, bucket_y_top),
+            (attach_x + bw_bot, bucket_y_top + bh),
+            (attach_x - bw_bot, bucket_y_top + bh)
+        ]
+        
+        # Draw Water inside bucket
+        fill = self.water_tank.fill_ratio
+        if fill > 0:
+            w_h = bh * fill
+            w_y = bucket_y_top + bh - w_h
+            w_top_half = bw_bot + (bw_top - bw_bot) * fill
+            water_pts = [
+                (attach_x - w_top_half, w_y),
+                (attach_x + w_top_half, w_y),
+                (attach_x + bw_bot, bucket_y_top + bh),
+                (attach_x - bw_bot, bucket_y_top + bh)
+            ]
+            pygame.draw.polygon(surface, (60, 170, 255), water_pts)
             
+        # Draw Bucket Outline
+        pygame.draw.polygon(surface, (200, 100, 30), bucket_pts, 2)
+
+        if self.sprite:
+            # Sprite naturally faces right with rotor on top
+            base_sprite = self.sprite
+            # Consistent tilt: pitches nose down in both flight directions
+            tilt = -(self.angle + 90.0)
+            if not self.facing_right:
+                base_sprite = pygame.transform.flip(self.sprite, True, False)
+
+            # Rotate sprite around center
+            rotated_sprite = pygame.transform.rotate(base_sprite, tilt)
+            rot_rect = rotated_sprite.get_rect(center=(int(screen_pos[0]), int(screen_pos[1])))
+            surface.blit(rotated_sprite, rot_rect)
+
+            # Rotor / engine wash effect when thrusting
+            if self.is_thrusting:
+                for _ in range(2):
+                    wash_x = screen_pos[0] + random.uniform(-14, 14)
+                    wash_y = screen_pos[1] + 20 + random.uniform(0, 8)
+                    pygame.draw.circle(surface, (210, 220, 235), (wash_x, wash_y), random.uniform(2, 4))
+
+        else:
+            # Fallback polygonal rendering
+            rad = math.radians(self.angle)
+            cos_a = math.cos(rad)
+            sin_a = math.sin(rad)
+            
+            local_points = [
+                (22, 0),    # Nose
+                (-16, -10), # Top/Left wing
+                (-12, 0),   # Body center indent
+                (-16, 10),  # Bottom/Right wing
+            ]
+            
+            transformed_points = []
+            for lx, ly in local_points:
+                rx = lx * cos_a - ly * sin_a + screen_pos[0]
+                ry = lx * sin_a + ly * cos_a + screen_pos[1]
+                transformed_points.append((rx, ry))
+                
+            body_color = (220, 220, 240) if self.water_tank.fill_ratio < 0.5 else (120, 180, 255)
+            pygame.draw.polygon(surface, body_color, transformed_points)
+            pygame.draw.polygon(surface, (40, 40, 60), transformed_points, 2)
+            
+            if self.is_thrusting:
+                flame_tail_x = -26 * cos_a + screen_pos[0]
+                flame_tail_y = -26 * sin_a + screen_pos[1]
+                pygame.draw.line(surface, (255, 180, 50), 
+                                 (-12 * cos_a + screen_pos[0], -12 * sin_a + screen_pos[1]), 
+                                 (flame_tail_x, flame_tail_y), 4)
+
         # Draw water tank indicator beneath craft
         if self.water_tank.current_water > 0:
             fill_pct = self.water_tank.fill_ratio
-            tank_w = 24
-            tank_h = 4
-            tank_rect = pygame.Rect(screen_pos[0] - tank_w // 2, screen_pos[1] + 16, tank_w, tank_h)
-            pygame.draw.rect(surface, (30, 30, 40), tank_rect)
-            fill_rect = pygame.Rect(screen_pos[0] - tank_w // 2, screen_pos[1] + 16, int(tank_w * fill_pct), tank_h)
-            pygame.draw.rect(surface, (60, 170, 255), fill_rect)
+            tank_w = 28
+            tank_h = 5
+            tank_rect = pygame.Rect(screen_pos[0] - tank_w // 2, screen_pos[1] + 24, tank_w, tank_h)
+            pygame.draw.rect(surface, (25, 25, 35), tank_rect, border_radius=2)
+            fill_rect = pygame.Rect(screen_pos[0] - tank_w // 2, screen_pos[1] + 24, int(tank_w * fill_pct), tank_h)
+            pygame.draw.rect(surface, (60, 180, 255), fill_rect, border_radius=2)
