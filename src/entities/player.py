@@ -10,12 +10,19 @@ import os
 import random
 import math
 import pygame
-from src.settings import GRAVITY, AIR_RESISTANCE, ANGULAR_DRAG, MAX_SPEED, WORLD_WIDTH, WORLD_HEIGHT
+from src.settings import (
+    GRAVITY, AIR_RESISTANCE, ANGULAR_DRAG, MAX_SPEED, 
+    WORLD_WIDTH, WORLD_HEIGHT, HELIPAD_X, HELIPAD_WIDTH, HELIPAD_Y
+)
 from src.entities.vehicle import BUCKET_HELI, VehicleStats
 from src.entities.water_tank import WaterTank
 
+# Center of helipad shop deck
+SHOP_SPAWN_X = HELIPAD_X + (HELIPAD_WIDTH / 2.0)
+SHOP_SPAWN_Y = HELIPAD_Y - 30.0
+
 class Player(pygame.sprite.Sprite):
-    def __init__(self, x: float = 950.0, y: float = 650.0, stats: VehicleStats = BUCKET_HELI):
+    def __init__(self, x: float = SHOP_SPAWN_X, y: float = SHOP_SPAWN_Y, stats: VehicleStats = BUCKET_HELI):
         super().__init__()
         self.stats = stats
         self.water_tank = WaterTank(stats.water_capacity, stats.siphon_speed)
@@ -67,7 +74,9 @@ class Player(pygame.sprite.Sprite):
     @property
     def current_thrust_power(self) -> float:
         bonus = 1.0 + (self.thruster_level * 0.25)
-        return self.stats.max_thrust * bonus
+        # Governor scaling: calm 70% thrust when empty, spooling up to 100% when fully loaded
+        load_scaling = 0.70 + (self.water_tank.fill_ratio * 0.30)
+        return self.stats.max_thrust * bonus * load_scaling
 
     def handle_input(self):
         """Polls keyboard input for FPV drone acro controls."""
@@ -95,6 +104,10 @@ class Player(pygame.sprite.Sprite):
 
     def update(self, dt: float):
         # 1. Pitch Rotation & Auto-Leveling
+        # Snappy counter-steering: reset opposite angular momentum when switching direction
+        if self.pitch_input != 0.0 and (self.pitch_input * self.angular_velocity < 0):
+            self.angular_velocity = 0.0
+
         rot_accel = self.pitch_input * self.stats.max_pitch_rate
         self.angular_velocity += rot_accel * dt
         self.angular_velocity *= ANGULAR_DRAG
