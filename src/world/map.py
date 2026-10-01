@@ -60,6 +60,17 @@ class WorldMap:
         ]
         return pts
 
+    def get_terrain_y(self, x: float) -> float:
+        """Returns the interpolated y-coordinate of the terrain at a given x."""
+        for i in range(len(self.terrain_points) - 1):
+            p1 = self.terrain_points[i]
+            p2 = self.terrain_points[i+1]
+            # Since the points generally progress from left to right:
+            if p1[0] <= x <= p2[0] and p2[0] != p1[0]:
+                t = (x - p1[0]) / (p2[0] - p1[0])
+                return p1[1] + t * (p2[1] - p1[1])
+        return WORLD_HEIGHT
+
     def draw(self, surface: pygame.Surface, camera):
         # 1. Transform terrain points to screen coordinates
         screen_pts = [camera.apply(pt) for pt in self.terrain_points]
