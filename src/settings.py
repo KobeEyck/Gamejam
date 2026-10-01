@@ -34,12 +34,15 @@ AIR_RESISTANCE = 0.985     # Velocity damping per frame
 ANGULAR_DRAG = 0.92        # Pitch rotation damping
 
 # --- Colors (Curated Palette) ---
-COLOR_SKY_NORMAL = (24, 28, 44)
-COLOR_SKY_HAZY = (60, 32, 28)
-COLOR_SKY_CRITICAL = (35, 12, 16)
+COLOR_SKY_NORMAL = (130, 200, 250)      # Bright daylight blue sky
+COLOR_SKY_HAZY = (220, 150, 100)        # Orange/dusty sunset-like sky (volcano ash)
+COLOR_SKY_CRITICAL = (180, 60, 40)      # Ominous deep red sky
 
-COLOR_TERRAIN = (45, 42, 50)
-COLOR_TERRAIN_OUTLINE = (75, 70, 85)
+COLOR_TERRAIN = (110, 160, 80)          # Vibrant green grassy hills
+COLOR_TERRAIN_OUTLINE = (60, 100, 40)   # Dark green terrain outline
+
+COLOR_BG_LAYER1 = (140, 190, 220)       # Distant hazy mountains (atmospheric blue)
+COLOR_BG_LAYER2 = (120, 175, 155)       # Mid-distance rolling hills
 
 COLOR_LAKE = (40, 140, 220)
 COLOR_LAKE_SURFACE = (80, 200, 255)
