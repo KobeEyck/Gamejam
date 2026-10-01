@@ -95,8 +95,8 @@ class Game:
                 elif event.key == pygame.K_s and self.state == GameState.GAME_OVER:
                     self.restart_game()
 
-                # Shop toggle when landed on helipad
-                elif event.key == pygame.K_h:
+                # Shop toggle when landed on airport runway
+                elif event.key in (pygame.K_h, pygame.K_e):
                     if self.is_landed and self.state == GameState.PLAYING:
                         self.state = GameState.SHOP
                     elif self.state == GameState.SHOP:

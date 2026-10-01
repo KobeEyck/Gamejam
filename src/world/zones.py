@@ -33,16 +33,17 @@ class LakeZone:
 
 class HelipadZone:
     def __init__(self):
-        self.rect = pygame.Rect(HELIPAD_X, HELIPAD_Y - 20, HELIPAD_WIDTH, 40)
+        # Generous bounds covering the entire airport runway and approach margins
+        self.rect = pygame.Rect(HELIPAD_X - 15, HELIPAD_Y - 45, HELIPAD_WIDTH + 30, 65)
 
     def is_player_landed(self, player) -> bool:
         """
-        Landed if inside helipad rect, speed is low, and craft is reasonably upright.
+        Landed if inside airport runway rect, speed is low / taxiing, and craft is reasonably upright.
         """
         if self.rect.collidepoint(player.pos.x, player.pos.y):
             speed = player.vel.length()
-            # Must touch down gently (< 45 px/sec) and nose upright (-120 to -60 deg)
-            if speed < 50.0 and -130 < player.angle < -50:
+            # Allow gentle touchdown or taxiing along the runway
+            if speed < 90.0 and -140 < player.angle < -40:
                 return True
         return False
 
