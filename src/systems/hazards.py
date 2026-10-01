@@ -40,6 +40,10 @@ class ThermalUpdraft:
         self.x = x
         self.width = width
         self.force = force  # Upward push in pixels/sec^2
+        
+        # Pre-allocate translucent overlay surface once to prevent 60 FPS garbage collection spikes
+        self.overlay = pygame.Surface((int(self.width), 1000), pygame.SRCALPHA)
+        self.overlay.fill((255, 120, 40, 22))
 
     def check_and_apply(self, player, dt: float):
         """Pushes the player upward if inside the updraft column."""
@@ -48,13 +52,13 @@ class ThermalUpdraft:
             player.apply_external_force(upward_force, dt)
 
     def draw(self, surface: pygame.Surface, camera):
-        """Draws faint convection currents."""
+        """Draws faint convection currents (viewport culled)."""
         rect = pygame.Rect(self.x, 0, self.width, 1000)
         screen_rect = camera.apply(rect)
-        # Create subtle translucent overlay
-        overlay = pygame.Surface((self.width, 1000), pygame.SRCALPHA)
-        overlay.fill((255, 120, 40, 20))
-        surface.blit(overlay, screen_rect.topleft)
+        
+        # Only blit if visible on screen
+        if -self.width <= screen_rect.x <= surface.get_width():
+            surface.blit(self.overlay, screen_rect.topleft)
 
 
 class HazardManager:
